@@ -2,10 +2,9 @@ services:
   ProjectZomboidDedicatedServer:
     image: pz:latest
     build: .
-    command: /bin/bash -c "cd /home/steam/pz-dedicated && ls -la && echo $${AdminPassword} && bash start-server.sh -adminpassword $${ADMIN_PASS} -port $${PORT:-16261}"
-    environment:
-      ADMIN_PASS: "123qwe"
-      PORT: 46261
+    #command: /bin/bash -c "cd /home/steam/pz-dedicated && ls -la && echo $${AdminPassword} && bash start-server.sh -adminpassword $${ADMIN_PASS} -port $${PORT:-16261}"
+    env_file:
+      - .env
     ports:
       - "8766:8766/udp"
       - "46261:46261/udp"
