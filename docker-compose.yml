@@ -1,13 +1,13 @@
 services:
   ProjectZomboidDedicatedServer:
-    image: pz:latest
+    image: danixu86/project-zomboid-dedicated-server:latest
     build: .
     #command: /bin/bash -c "cd /home/steam/pz-dedicated && ls -la && echo $${AdminPassword} && bash start-server.sh -adminpassword $${ADMIN_PASS} -port $${PORT:-16261}"
     env_file:
       - .env
     ports:
       - "8766:8766/udp"
-      - "46261:46261/udp"
-      - "46262-46272:46262-46272/tcp"
+      - "16261:16261/udp"
+      - "16262-16272:16262-16272/tcp"
     volumes:
       - ./data:/home/steam/Zomboid
