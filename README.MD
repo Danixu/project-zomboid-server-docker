@@ -32,7 +32,6 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `SOFTRESET:` Performs a soft reset in the server
 
-
 ## Required ports
 
 The required ports are docummented in the [Official wiki](https://pzwiki.net/wiki/Dedicated_Server#Forwarding_Required_Ports)
