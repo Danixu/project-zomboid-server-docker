@@ -13,4 +13,4 @@ services:
       # Server data
       - ./data:/home/steam/Zomboid
       # Workshop mods folder
-      - ./workshop-mods:/home/steam/pz-dedicated/steamapps/workshop/content
+      - ./workshop-mods:/home/steam/pz-dedicated/steamapps/workshop

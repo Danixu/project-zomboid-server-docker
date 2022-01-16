@@ -51,15 +51,24 @@ else
   SERVERNAME="servertest"
 fi
 
-# If server config doesn't exists, presset is set and preset file exists, the new servername config will be created using that presset
-if [ ! -f "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua" ] && [ "${SERVERPRESET}" != "" ] && [ -f "${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua" ]; then
-  echo "*** INFO: New server will be created using the preset ${SERVERPRESET} ***"
-  echo "*** Copying preset file from \"${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua\" to \"${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua\" ***"
-  mkdir -p "${HOME}/Zomboid/Server/"
-  cp "${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua" "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
-  sed -i "1s/return.*/SandboxVars = \{/" "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
-  # Remove carriage return
-  dos2unix "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+# If preset is set, then the config file is generated when it doesn't exists or SERVERPRESETREPLACE is set to True.
+if [ "${SERVERPRESET}" != "" ]; then
+  # If preset file doesn't exists then show an error and exit
+  if [ ! -f "${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua" ]; then
+    echo "*** ERROR: the preset ${SERVERPRESET} doesn't exists. Please fix the configuration before start the server ***"
+    exit 1
+  # If SandboxVars files doesn't exists or replace is true, copy the file
+  elif [ ! -f "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua" ] || [ "${SERVERPRESETREPLACE,,}" == "true" ]; then
+    echo "*** INFO: New server will be created using the preset ${SERVERPRESET} ***"
+    echo "*** Copying preset file from \"${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua\" to \"${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua\" ***"
+    mkdir -p "${HOME}/Zomboid/Server/"
+    cp -nf "${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua" "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    sed -i "1s/return.*/SandboxVars = \{/" "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    # Remove carriage return
+    dos2unix "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    # I have seen that the file is created in execution mode (755). Change the file mode for security reasons.
+    chmod 644 "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+  fi
 fi
 
 # Option to handle multiple network cards. Example: 127.0.0.1

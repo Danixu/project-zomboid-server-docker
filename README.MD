@@ -20,6 +20,8 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `SERVERPRESET:` Set the new servers default preset. If not set, the default is apocalypse. Allowed options are Apocalypse, Beginner, Builder, FirstWeek, SixMonthsLater, Survival and Survivor.
 
+`SERVERPRESETREPLACE:` Replace the server preset by the one seted by the SERVERPRESET variable. By default false to avoid to replace custom configurations once the server has started.
+
 `IP:` Set the interface IP where the server will listen. By default all the interfaces.
 
 `PORT:` Set the server port. By default 16261
@@ -38,16 +40,22 @@ The required ports are docummented in the [Official wiki](https://pzwiki.net/wik
 
 For now the ports are the following, but it can change.
 
-### Steam ports
+### Steam clients ports
+
+This ports are used by the Steam clients to connect with the server, so it must be opened in firewall and configured in NAT.
 
 * 8766 UDP
-* 16261 UDP
+* 8767 UDP
+* 16261 UDP (configurable)
 
-### Non Steam ports
+### Non Steam clients ports
+
+This ports are used by the No Steam clients to connect with the server, so it must be opened in firewall and configured in NAT.
 
 * 8766 UDP
-* 16261 UDP
-* 16262 - 16272 TCP
+* 8767 UDP
+* 16261 UDP (configurable)
+* 16262 - 16272 TCP (range depends of the above port and the clients slots)
 
 ### Notes
 
@@ -59,5 +67,5 @@ For now the ports are the following, but it can change.
 
 To setup the server you can use the docker-compose program:
 
-* Copy the .env.template to .env and edit it with the settings you want. The only mandatory variable is ADMINPASSWORD the first time the server is executed (once is started at least once, it can be removed). The other variables are optional.
+* Copy the .env.template to .env and edit it with the settings you want. The only mandatory variable is ADMINPASSWORD and just the first time the server is executed (once is started at least once, it can be removed). The other variables are optional.
 * Run the `docker-compose up -d` command to start the server.
