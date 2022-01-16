@@ -63,7 +63,6 @@ function versionCompare(){
 LATEST_IMAGE_VERSION=`curl -L -s "https://registry.hub.docker.com/v2/repositories/${DOCKER_IMAGE}/tags?page_size=1024"|jq  '.results[]["name"]'|grep -iv "latest"|sort|tail -n1|sed 's/"//g'`
 LATEST_SERVER_VERSION=`curl "${PZ_URL}" 2>/dev/null| grep -i "Stable Build" | head -n1 | cut -d ":" -f2 | awk '{print $1}'`
 
-LATEST_SERVER_VERSION="41.66"
 NEW_VERSION=$(versionCompare ${LATEST_IMAGE_VERSION} ${LATEST_SERVER_VERSION})
 
 if [ $NEW_VERSION == -1 ]; then
