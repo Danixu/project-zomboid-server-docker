@@ -2,6 +2,10 @@
 
 This Dockerfile downloads the Project Zombie dedicated server using SteamCMD. Will allow you to deploy with ease a server in Kubernetes, Docker...
 
+The ready to use image is available here:
+
+https://hub.docker.com/r/danixu86/project-zomboid-dedicated-server
+
 ## Environment variables
 
 This dockerfile converts some env variables to arguments in the server command, allowing to configure it. The image supports the following environment variables:
