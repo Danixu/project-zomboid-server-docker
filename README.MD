@@ -36,7 +36,26 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `MEMORY:` Amount of memory to use in the server JVM (units can be used, for example 2048m). By default 8096m.
 
-`SOFTRESET:` Performs a soft reset in the server
+`SOFTRESET:` Performs a soft reset in the server, which will do the following:
+
+* Removes items from the ground.
+* Removes items from containers and replaces them with new loot. This includes player-made containers.
+* Removes corpses and zombified players.
+* Resets zombies.
+* Removes blood splatter.
+* Resets building alarms.
+* Resets the game clock. I’m not positive if this resets to day 1, but the original blog post implies that it does. So this would bring water and electricity back. Assuming your server settings have them * available at day 1.
+* Player-made buildings won’t be deleted.
+* Player inventories won’t reset.
+
+Removing the following files in the Server data folder:
+
+* all zombie_X_Y.bin files
+* map_t.bin
+* map_meta.bin
+* reanimated.bin
+
+Currently is not working correctly and will cause the server to crash when it is active. Also the above points are not performed so nothign will change in the server.
 
 ## Required ports
 
@@ -73,3 +92,4 @@ To setup the server you can use the docker-compose program:
 
 * Copy the .env.template to .env and edit it with the settings you want. The only mandatory variable is ADMINPASSWORD and just the first time the server is executed (once is started at least once, it can be removed). The other variables are optional.
 * Run the `docker-compose up -d` command to start the server.
+
