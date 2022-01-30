@@ -32,6 +32,9 @@ RUN chmod 550 /server/scripts/entry.sh
 
 USER ${USER}
 
+# Create required folders to keep their permissions on mount
+RUN mkdir -p "${HOMEDIR}/Zomboid"
+
 WORKDIR ${HOMEDIR}
 # Expose ports
 EXPOSE 8766/udp \
