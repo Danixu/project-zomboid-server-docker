@@ -114,4 +114,7 @@ fi
 # ERROR: ld.so: object 'libjsig.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"
 
-bash start-server.sh ${ARGS}
+## Fix the permissions in the data and workshop folders
+chown -R 1000:1000 /home/steam/pz-dedicated/steamapps/workshop /home/steam/Zomboid
+
+su steam -s /bin/bash start-server.sh "${ARGS}"

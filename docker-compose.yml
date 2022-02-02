@@ -1,9 +1,8 @@
-version: "3"
+version: "3.8"
 services:
   ProjectZomboidDedicatedServer:
     image: danixu86/project-zomboid-dedicated-server:latest
-    #build: .
-    #command: /bin/bash -c "cd /home/steam/pz-dedicated && ls -la && echo $${AdminPassword} && bash start-server.sh -adminpassword $${ADMIN_PASS} -port $${PORT:-16261}"
+    restart: unless-stopped
     env_file:
       - .env
     ports:
