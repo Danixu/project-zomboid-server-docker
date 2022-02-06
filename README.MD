@@ -10,15 +10,21 @@ https://hub.docker.com/r/danixu86/project-zomboid-dedicated-server
 
 This dockerfile converts some env variables to arguments in the server command, allowing to configure it. The image supports the following environment variables:
 
-`NOSTEAM:` Starts the server in NoSteam mode, allowing to non steam users to connect.
+`ADMINPASSWORD:` Sets or changes the admin password. Is mandatory at first startup or will fail. I recommend to remove it once the server is started because the server logs every argument in clear text (if doesn't cares, you can leave it).
 
 `CACHEDIR:` Set the folder where the data will be stored. By default the server stores the data in the Zomboid folder in home directory (/home/steam/Zomboid). Is recommended to store this data into a persistent volume to keep the server state.
 
-`MODFOLDERS`: Mod folders to use to load the game mods. Allowed options are workshop, steam, and mods. Options must be separated by comma, for example: workshop,steam,mods
-
 `DEBUG:` Enable the debug mode in server
 
-`ADMINPASSWORD:` Sets or changes the admin password. Is mandatory at first startup or will fail. I recommend to remove it once the server is started because the server logs every argument in clear text (if doesn't cares, you can leave it).
+`IP:` Set the interface IP where the server will listen. By default all the interfaces.
+
+`MEMORY:` Amount of memory to use in the server JVM (units can be used, for example 2048m). By default 8096m.
+
+`MODFOLDERS`: Mod folders to use to load the game mods. Allowed options are workshop, steam, and mods. Options must be separated by comma, for example: workshop,steam,mods
+
+`NOSTEAM:` Starts the server in NoSteam mode, allowing to non steam users to connect.
+
+`PORT:` Set the server port. By default 16261
 
 `SERVERNAME:` Set the server name, which allows you to have multiple server versions. Changing the name will create a new server data, so current progress will not be available. Also will not be lost, just reverting the server name change will load it again.
 
@@ -26,17 +32,15 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `SERVERPRESETREPLACE:` Replace the server preset by the one seted by the SERVERPRESET variable. By default false to avoid to replace custom configurations once the server has started.
 
-`IP:` Set the interface IP where the server will listen. By default all the interfaces.
-
-`PORT:` Set the server port. By default 16261
-
-`STEAMVAC:` Enables or disables de SteamVac protection in server
+`SOFTRESET:` Performs a soft reset in the server. More info in the Soft Reset section.
 
 `STEAMPORT1 & STEAMPORT2:` Sets the two additional ports required for steam to work. I guess that those ports are UDP, but it can be also TCP.
 
-`MEMORY:` Amount of memory to use in the server JVM (units can be used, for example 2048m). By default 8096m.
+`STEAMVAC:` Enables or disables de SteamVac protection in server
 
-`SOFTRESET:` Performs a soft reset in the server, which will do the following:
+## Soft Reset
+
+Soft reset will perform the following tasks:
 
 * Removes items from the ground.
 * Removes items from containers and replaces them with new loot. This includes player-made containers.
@@ -48,7 +52,7 @@ This dockerfile converts some env variables to arguments in the server command, 
 * Player-made buildings won’t be deleted.
 * Player inventories won’t reset.
 
-Removing the following files in the Server data folder:
+Removing the following files in the Server data folder (ToDo: I have to search the equivalent files in modern version):
 
 * all zombie_X_Y.bin files
 * map_t.bin
