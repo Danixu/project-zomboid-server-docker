@@ -11,12 +11,12 @@ ARGS=""
 
 # Set the server memory. Units are accepted (1024m=1Gig, 2048m=2Gig, 4096m=4Gig): Example: 1024m
 if [ -n "${MEMORY}" ]; then
-  ARGS="${ARGS} -Xmx${MEMORY} -Xms${MEMORY}" 
+  ARGS="${ARGS} -Xmx${MEMORY} -Xms${MEMORY}"
 fi
 
 # Option to perform a Soft Reset
 if [ "${SOFTRESET}" == "1" ] || [ "${SOFTRESET,,}" == "true" ]; then
-  ARGS="${ARGS} -Dsoftreset" 
+  ARGS="${ARGS} -Dsoftreset"
 fi
 
 # End of Java arguments
@@ -86,12 +86,12 @@ fi
 
 # Option to handle multiple network cards. Example: 127.0.0.1
 if [ -n "${IP}" ]; then
-  ARGS="${IP} -ip ${IP}"
+  ARGS="${ARGS} ${IP} -ip ${IP}"
 fi
 
 # Set the DefaultPort for the server. Example: 16261
 if [ -n "${PORT}" ]; then
-  ARGS="${ARGS} -port ${PORT}" 
+  ARGS="${ARGS} -port ${PORT}"
 fi
 
 # Option to enable/disable VAC on Steam servers. On the server command-line use -steamvac true/false. In the server's INI file, use STEAMVAC=true/false.
@@ -117,4 +117,4 @@ export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"
 ## Fix the permissions in the data and workshop folders
 chown -R 1000:1000 /home/steam/pz-dedicated/steamapps/workshop /home/steam/Zomboid
 
-su steam -s /bin/bash start-server.sh "${ARGS}"
+su steam -c "./start-server.sh ${ARGS}"
