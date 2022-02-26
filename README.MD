@@ -97,3 +97,10 @@ To setup the server you can use the docker-compose program:
 * Copy the .env.template to .env and edit it with the settings you want. The only mandatory variable is ADMINPASSWORD and just the first time the server is executed (once is started at least once, it can be removed). The other variables are optional.
 * Run the `docker-compose up -d` command to start the server.
 
+## Scripts folder
+
+In the scripts folders there are three scripts:
+
+* entry.sh: The script used in the image to start the server
+* update_forum.sh: Check the posts in the forum for updates and create a new image if a new version exists. This script was made because looks like the official page doesn't update the version as soon it is out.
+* uodate_web.sh: Check the version in the official page and create a new image if a new version exists

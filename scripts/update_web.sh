@@ -69,7 +69,8 @@ if [ $NEW_VERSION == -1 ]; then
   echo -e "\n\nA new version of the server was detected. Creating the new image...\n"
   echo "****************************************************************************"
   docker build --compress --no-cache -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:${LATEST_SERVER_VERSION} .
-  docker push ${DOCKER_IMAGE}:latest ${DOCKER_IMAGE}:${LATEST_SERVER_VERSION}
+  docker push ${DOCKER_IMAGE}:${LATEST_SERVER_VERSION}
+  docker push ${DOCKER_IMAGE}:latest
   echo "****************************************************************************"
   echo -e "\n\n"
 elif [ $NEW_VERSION == 0 ]; then
