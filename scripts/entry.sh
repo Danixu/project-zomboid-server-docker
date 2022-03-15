@@ -71,16 +71,16 @@ if [ -n "${SERVERPRESET}" ]; then
     echo "*** ERROR: the preset ${SERVERPRESET} doesn't exists. Please fix the configuration before start the server ***"
     exit 1
   # If SandboxVars files doesn't exists or replace is true, copy the file
-  elif [ ! -f "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua" ] || [ "${SERVERPRESETREPLACE,,}" == "true" ]; then
+  elif [ ! -f "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua" ] || [ "${SERVERPRESETREPLACE,,}" == "true" ]; then
     echo "*** INFO: New server will be created using the preset ${SERVERPRESET} ***"
-    echo "*** Copying preset file from \"${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua\" to \"${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua\" ***"
-    mkdir -p "${HOME}/Zomboid/Server/"
-    cp -nf "${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua" "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
-    sed -i "1s/return.*/SandboxVars = \{/" "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    echo "*** Copying preset file from \"${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua\" to \"${HOMEDIR}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua\" ***"
+    mkdir -p "${HOMEDIR}/Zomboid/Server/"
+    cp -nf "${STEAMAPPDIR}/media/lua/shared/Sandbox/${SERVERPRESET}.lua" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    sed -i "1s/return.*/SandboxVars = \{/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
     # Remove carriage return
-    dos2unix "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    dos2unix "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
     # I have seen that the file is created in execution mode (755). Change the file mode for security reasons.
-    chmod 644 "${HOME}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
+    chmod 644 "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_SandboxVars.lua"
   fi
 fi
 
@@ -117,4 +117,4 @@ export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"
 ## Fix the permissions in the data and workshop folders
 chown -R 1000:1000 /home/steam/pz-dedicated/steamapps/workshop /home/steam/Zomboid
 
-su steam -c "./start-server.sh ${ARGS}"
+su - steam -c "export LD_LIBRARY_PATH=\"${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}\" && cd ${STEAMAPPDIR} && pwd && ./start-server.sh ${ARGS}"
