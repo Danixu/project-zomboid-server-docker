@@ -22,4 +22,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
     
       - name: Check the latest version and push new versions
-        run: scripts/get_updates.sh
+        shell: bash
+        - run: |
+          # make file runnable, might not be necessary
+          chmod +x "${GITHUB_WORKSPACE}/scripts/get_updates.sh"
+
+          # run script
+          "${GITHUB_WORKSPACE}/scripts/get_updates.sh"
