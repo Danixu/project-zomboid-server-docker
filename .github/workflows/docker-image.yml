@@ -23,7 +23,7 @@ jobs:
     
       - name: Check the latest version and push new versions
         shell: bash
-        - run: |
+        run: |
           # make file runnable, might not be necessary
           chmod +x "${GITHUB_WORKSPACE}/scripts/get_updates.sh"
 
