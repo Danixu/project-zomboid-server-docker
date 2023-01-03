@@ -16,6 +16,8 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `DEBUG:` Enable the debug mode in server
 
+`FORCEUPDATE:` Force a server update on every start. This process can be slow if the image is old.
+
 `IP:` Set the interface IP where the server will listen. By default all the interfaces.
 
 `MEMORY:` Amount of memory to use in the server JVM (units can be used, for example 2048m). By default 8096m.

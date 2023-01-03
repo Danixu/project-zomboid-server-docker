@@ -2,6 +2,18 @@
 
 cd ${STEAMAPPDIR}
 
+#####################################
+#                                   #
+# Force an update if the env is set #
+#                                   #
+#####################################
+
+if [ "${FORCEUPDATE}" == "1" ]; then
+  echo "FORCEUPDATE variable is set, so the server will be updated right now"
+  bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" +login anonymous +app_update "${STEAMAPPID}" validate +quit
+fi
+
+
 ######################################
 #                                    #
 # Process the arguments in variables #

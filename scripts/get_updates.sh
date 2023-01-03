@@ -8,7 +8,9 @@
 ########################333333##################
 
 DOCKER_IMAGE="danixu86/project-zomboid-dedicated-server"
-PZ_URL="https://theindiestone.com/forums/index.php?/forum/35-pz-updates/"
+PZ_URL_WEB="https://projectzomboid.com/blog/"
+PZ_URL_FORUM="https://theindiestone.com/forums/index.php?/forum/35-pz-updates/"
+
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "${SCRIPT_DIR}/../"
@@ -67,7 +69,7 @@ LATEST_IMAGE_VERSION=`curl -L -s "https://registry.hub.docker.com/v2/repositorie
 ## Checking the latest version in Forum ##
 ##                                      ##
 ##########################################
-LATEST_SERVER_VERSION=`curl "${PZ_URL}" 2>/dev/null|egrep -iv "(IWBUMS|UNSTABLE)"|grep -oPi "[0-9]{1,3}\.[0-9]{1,2} released"|sort -r|head -n1|grep -oP "[0-9]{1,3}\.[0-9]{1,2}"`
+LATEST_SERVER_VERSION=`curl "${PZ_URL_FORUM}" 2>/dev/null|egrep -iv "(IWBUMS|UNSTABLE)"|grep -oPi "[0-9]{1,3}\.[0-9]{1,2} released"|sort -r|head -n1|grep -oP "[0-9]{1,3}\.[0-9]{1,2}"`
 NEW_VERSION=$(versionCompare ${LATEST_IMAGE_VERSION} ${LATEST_SERVER_VERSION})
 
 if [ $NEW_VERSION == -1 ]; then
@@ -82,7 +84,7 @@ if [ $NEW_VERSION == -1 ]; then
 elif [ $NEW_VERSION == 0 ]; then
   echo -e "\n\nThere is no new version of the Zomboid server\n\n"
 elif [ $NEW_VERSION == 1 ]; then
-  echo -e "\n\nServer version is lower than latest docker version... Please, check this script because maybe is not working correctly\n\n"
+  echo -e "\n\nServer version (${LATEST_SERVER_VERSION}) is lower than latest docker version (${LATEST_IMAGE_VERSION})... Please, check this script because maybe is not working correctly\n\n"
 else
   echo -e "\n\nThere was an unknown error.\n\n"
 fi
@@ -92,7 +94,7 @@ fi
 ## Checking the latest version in webpage ##
 ##                                        ##
 ############################################
-LATEST_SERVER_VERSION=`curl "${PZ_URL}" 2>/dev/null| grep -i "Stable Build" | head -n1 | cut -d ":" -f2 | awk '{print $1}'`
+LATEST_SERVER_VERSION=`curl "${PZ_URL_WEB}" 2>/dev/null| grep -i "Stable Build" | head -n1 | cut -d ":" -f2 | awk '{print $1}'`
 
 NEW_VERSION=$(versionCompare ${LATEST_IMAGE_VERSION} ${LATEST_SERVER_VERSION})
 
@@ -107,7 +109,7 @@ if [ $NEW_VERSION == -1 ]; then
 elif [ $NEW_VERSION == 0 ]; then
   echo -e "\n\nThere is no new version of the Zomboid server\n\n"
 elif [ $NEW_VERSION == 1 ]; then
-  echo -e "\n\nServer version is lower than latest docker version... Pleae, check this script because maybe is not working correctly\n\n"
+  echo -e "\n\nServer version (${LATEST_SERVER_VERSION}) is lower than latest docker version (${LATEST_IMAGE_VERSION})... Please, check this script because maybe is not working correctly\n\n"
 else
   echo -e "\n\nThere was an unknown error.\n\n"
 fi
