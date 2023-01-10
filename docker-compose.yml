@@ -6,9 +6,9 @@ services:
     env_file:
       - .env
     ports:
-      - "8766:8766/udp"
       - "16261:16261/udp"
-      - "16262-16272:16262-16272/tcp"
+      - "16262:16262/udp"
+      - "27015:27015/tcp"
     volumes:
       # Server data
       - ./data:/home/steam/Zomboid
