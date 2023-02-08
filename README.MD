@@ -40,6 +40,11 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `STEAMVAC:` Enables or disables de SteamVac protection in server
 
+`WORKSHOP_IDS:` Semicolon separated list of Workshop IDs to install to the server
+
+`MOD_IDS:` Semicolon separated list of Mod IDs to install to the server
+
+Mods will install on second server start
 ## Soft Reset
 
 Soft reset will perform the following tasks:
