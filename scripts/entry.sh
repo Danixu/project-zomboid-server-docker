@@ -122,6 +122,10 @@ if [ -n "${STEAMPORT2}" ]; then
   ARGS="${ARGS} -steamport2 ${STEAMPORT1}"
 fi
 
+if [ -n "${PASSWORD}" ]; then
+	sed -i "s/Password=.*/Password=${PASSWORD}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+fi
+
 if [ -n "${MOD_IDS}" ]; then
  	echo "*** INFO: Found Mods including ${MOD_IDS} ***"
 	sed -i "s/Mods=.*/Mods=${MOD_IDS}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
