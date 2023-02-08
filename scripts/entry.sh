@@ -122,6 +122,17 @@ if [ -n "${STEAMPORT2}" ]; then
   ARGS="${ARGS} -steamport2 ${STEAMPORT1}"
 fi
 
+if [ -n "${MOD_IDS}" ]; then
+ 	echo "*** INFO: Found Mods including ${MOD_IDS} ***"
+	sed -i "s/Mods=.*/Mods=${MOD_IDS}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+fi
+
+if [ -n "${WORKSHOP_IDS}" ]; then
+ 	echo "*** INFO: Found Workshop IDs including ${WORKSHOP_IDS} ***"
+	sed -i "s/WorkshopItems=.*/WorkshopItems=${WORKSHOP_IDS}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+fi
+
+
 # Fix to a bug in start-server.sh that causes to no preload a library:
 # ERROR: ld.so: object 'libjsig.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"
