@@ -12,6 +12,8 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `ADMINPASSWORD:` Sets or changes the admin password. Is mandatory at first startup or will fail. I recommend to remove it once the server is started because the server logs every argument in clear text (if doesn't cares, you can leave it).
 
+`PASSWORD:` Sets or changes server password. Is optional.
+
 `CACHEDIR:` Set the folder where the data will be stored. By default the server stores the data in the Zomboid folder in home directory (/home/steam/Zomboid). Is recommended to store this data into a persistent volume to keep the server state.
 
 `DEBUG:` Enable the debug mode in server
