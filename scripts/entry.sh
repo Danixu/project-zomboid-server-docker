@@ -139,6 +139,39 @@ fi
 if [ -n "${WORKSHOP_IDS}" ]; then
  	echo "*** INFO: Found Workshop IDs including ${WORKSHOP_IDS} ***"
 	sed -i "s/WorkshopItems=.*/WorkshopItems=${WORKSHOP_IDS}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+	
+fi
+
+if [ -n "${MODS_WITH_MAPS}" ]; then
+
+	sed -i 's/\r$//' /server/scripts/search_folder.sh
+  map_list=""
+ 	mod_list=${MODS_WITH_MAPS}
+	IFS=";" read -ra strings <<< "$mod_list"
+	for string in "${strings[@]}"; do
+	  output=$(/server/scripts/search_folder.sh "${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600/" "$string")
+    map_list+="$output"    
+	done
+
+  echo "*** INFO: Found maps including ${map_list} ***"
+	sed -i "s/Map=.*/Map=Muldraugh, KY;${map_list}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+fi
+
+if [ -n "${SPAWNREGIONS}" ]; then
+
+	input_list=${SPAWNREGIONS}
+	result=""
+	IFS=";" read -ra strings <<< "$input_list"
+	for string in "${strings[@]}"; do
+	    if ! grep -q "$string" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"; then
+	    	result="$result\{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },\n"
+            fi
+	done
+
+	sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
+	$result
+	}" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"
+
 fi
 
 
