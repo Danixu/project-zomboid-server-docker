@@ -155,17 +155,14 @@ if [ -n "${MODS_WITH_MAPS}" ]; then
 
   echo "*** INFO: Found maps including ${map_list} ***"
 	sed -i "s/Map=.*/Map=Muldraugh, KY;${map_list}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
-fi
 
-if [ -n "${SPAWNREGIONS}" ]; then
-
-	input_list=${SPAWNREGIONS}
-	result=""
-	IFS=";" read -ra strings <<< "$input_list"
+	IFS=";" read -ra strings <<< "$map_list"
 	for string in "${strings[@]}"; do
 	    if ! grep -q "$string" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"; then
-	    	result="$result\{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },\n"
-            fi
+        if [ -e "${HOMEDIR}/pz-dedicated/media/maps/$string/spawnpoints.lua" ]; then
+	    	  result="$result\{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },\n"
+        fi
+      fi
 	done
 
 	sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
