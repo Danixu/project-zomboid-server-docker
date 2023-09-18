@@ -23,8 +23,9 @@ search_folder() {
                         for source_dir in "${source_dirs[@]}"; do
                             dir_name=$(basename "$source_dir")
                             if [ ! -d "$map_dir/$dir_name" ]; then
+                                echo "Found map(s). Copying..."
                                 cp -r "$mod_folder/media/maps"/* "${HOMEDIR}/pz-dedicated/media/maps"
-                                echo "Found map: $source_dir"
+                                echo "Successfully copied!"
                             fi
                         done
 
