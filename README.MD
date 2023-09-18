@@ -47,6 +47,7 @@ This dockerfile converts some env variables to arguments in the server command, 
 `MOD_IDS:` Semicolon separated list of Mod IDs to install to the server
 
 Mods will install on second server start
+
 Maps are added on third server start, after mods are added
 ## Soft Reset
 
