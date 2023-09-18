@@ -147,9 +147,10 @@ sed -i 's/\r$//' /server/scripts/search_folder.sh
 map_list=""
 source /server/scripts/search_folder.sh "${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600"
 map_list=$(<"${HOMEDIR}/maps.txt")  
+rm "${HOMEDIR}/maps.txt"
 
 echo "*** INFO: Added maps including ${map_list} ***"
-sed -i "s/Map=.*/Map=Muldraugh, KY;${map_list}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+sed -i "s/Map=.*/Map=${map_list}Muldraugh, KY/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
 
 IFS=";" read -ra strings <<< "$map_list"
 for string in "${strings[@]}"; do
