@@ -142,34 +142,28 @@ if [ -n "${WORKSHOP_IDS}" ]; then
 	
 fi
 
-if [ -n "${MODS_WITH_MAPS}" ]; then
 
-	sed -i 's/\r$//' /server/scripts/search_folder.sh
-  map_list=""
- 	mod_list=${MODS_WITH_MAPS}
-	IFS=";" read -ra strings <<< "$mod_list"
-	for string in "${strings[@]}"; do
-	  output=$(/server/scripts/search_folder.sh "${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600/" "$string")
-    map_list+="$output"    
-	done
+sed -i 's/\r$//' /server/scripts/search_folder.sh
+map_list=""
+source /server/scripts/search_folder.sh "${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600"
+map_list=$(<"${HOMEDIR}/maps.txt")  
 
-  echo "*** INFO: Found maps including ${map_list} ***"
-	sed -i "s/Map=.*/Map=Muldraugh, KY;${map_list}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+echo "*** INFO: Added maps including ${map_list} ***"
+sed -i "s/Map=.*/Map=Muldraugh, KY;${map_list}/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
 
-	IFS=";" read -ra strings <<< "$map_list"
-	for string in "${strings[@]}"; do
-	    if ! grep -q "$string" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"; then
-        if [ -e "${HOMEDIR}/pz-dedicated/media/maps/$string/spawnpoints.lua" ]; then
-	    	  result="$result\{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },\n"
-        fi
+IFS=";" read -ra strings <<< "$map_list"
+for string in "${strings[@]}"; do
+    if ! grep -q "$string" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"; then
+      if [ -e "${HOMEDIR}/pz-dedicated/media/maps/$string/spawnpoints.lua" ]; then
+        result="$result\{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },\n"
       fi
-	done
+    fi
+done
 
-	sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
-	$result
-	}" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"
+sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
+$result
+}" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"
 
-fi
 
 
 # Fix to a bug in start-server.sh that causes to no preload a library:
