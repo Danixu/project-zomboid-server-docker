@@ -3,34 +3,46 @@
 # Function to recursively search for a folder name
 search_folder() {
     local search_dir="$1"
-    echo "Searching for maps"
+    counter=1
 
     for item in "$search_dir"/*; do
+
+        echo "Searching for maps: ($counter/$(ls -1 "$search_dir" | wc -l))"
+
         # Check if the given directory exists
         if [ -d "$search_dir" ]; then                
             # Check if there is a "maps" folder within the "mods" directory
             if [ -d "$item/mods" ]; then
-                # echo "Searching in: $item/mods" <-- for debugging purposes 
                 for mod_folder in "$item/mods"/*; do
                     if [ -d "$mod_folder/media/maps" ]; then
                 
                         # Copy maps to map folder
-                        cp -r "$mod_folder/media/maps"/* "${HOMEDIR}/pz-dedicated/media/maps"
+                        source_dirs=("$mod_folder/media/maps"/*)
+                        map_dir=("${HOMEDIR}/pz-dedicated/media/maps")
+
+                        for source_dir in "${source_dirs[@]}"; do
+                            dir_name=$(basename "$source_dir")
+                            if [ ! -d "$map_dir/$dir_name" ]; then
+                                cp -r "$mod_folder/media/maps"/* "${HOMEDIR}/pz-dedicated/media/maps"
+                                echo "Found map: $source_dir"
+                            fi
+                        done
 
                         # Adds map names to a semicolon separated list and outputs it.
                         map_list=""
                         for dir in "$mod_folder/media/maps"/*/; do
-                            echo "Found maps: $dir"
                             if [ -d "$dir" ]; then
                                 dir_name=$(basename "$dir")
                                 map_list+="$dir_name;"     
                             fi
                         done
+                        # Exports to .txt file to add to .ini file in entry.sh
                             echo -n "$map_list" >> "${HOMEDIR}/maps.txt"
                     fi
                 done
             fi
         fi
+        ((counter++))
     done
 }
 
