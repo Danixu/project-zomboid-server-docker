@@ -47,6 +47,8 @@ This dockerfile converts some env variables to arguments in the server command, 
 `MOD_IDS:` Semicolon separated list of Mod IDs to install to the server
 
 Mods will install on second server start
+
+Maps are added on third server start, after mods are added
 ## Soft Reset
 
 Soft reset will perform the following tasks:
@@ -111,5 +113,6 @@ To setup the server you can use the docker-compose program:
 In the scripts folders there are three scripts:
 
 * entry.sh: The script used in the image to start the server
+* search_folder.sh: Script to search through mod folders for any maps 
 * update_forum.sh: Check the posts in the forum for updates and create a new image if a new version exists. This script was made because looks like the official page doesn't update the version as soon it is out.
 * uodate_web.sh: Check the version in the official page and create a new image if a new version exists
