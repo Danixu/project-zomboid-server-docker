@@ -6,6 +6,8 @@ The ready to use image is available here:
 
 https://hub.docker.com/r/danixu86/project-zomboid-dedicated-server
 
+**WARNING:** Running the image on Windows using WSL2 in Docker Desktop will make the server startup times significantly slower. This is fine unless you are running alot of mods in which case server startup times may vary from 15 - 40 minutes. The best way to solve this problem is to run your container on a Linux based system or in a Linux VM.
+
 ## Environment variables
 
 This dockerfile converts some env variables to arguments in the server command, allowing to configure it. The image supports the following environment variables:
