@@ -25,8 +25,6 @@ environments:
     value: "helm-chart-server"
   - name: "WORKSHOP_IDS"
     value: ""
-  - name: "MOD_IDS"
-    value: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
