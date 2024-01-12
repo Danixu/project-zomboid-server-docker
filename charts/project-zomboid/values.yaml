@@ -14,6 +14,20 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+environments:
+  - name: "ADMINPASSWORD"
+    value: "ADMINPASSWORD"
+  - name: "MEMORY"
+    value: "8096m"
+  - name: "MODFOLDERS"
+    value: "workshop"
+  - name: "SERVERNAME"
+    value: "helm-chart-server"
+  - name: "WORKSHOP_IDS"
+    value: ""
+  - name: "MOD_IDS"
+    value: ""
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
