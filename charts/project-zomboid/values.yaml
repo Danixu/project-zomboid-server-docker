@@ -51,15 +51,16 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-gameService:
-  name: GameService
+service:
   type: LoadBalancer
-  port: 16261
 
-gameDirectService:
-  name: GameDirectService
-  type: LoadBalancer
-  port: 16262
+services:
+  - name: GameService
+    port: 16261
+    protocol: UDP
+  - name: GameDirectService
+    port: 16262
+    protocol: UDP
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

@@ -7,13 +7,6 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.gameService.port }}
-      targetPort: {{ .Values.gameService.port }}
-      protocol: UDP
-      name: {{ .Values.gameService.name }}
-    - port: {{ .Values.gameDirectService.port }}
-      targetPort: {{ .Values.gameDirectService.port }}
-      protocol: UDP
-      name: {{ .Values.gameDirectService.name }}
+    {{- toYaml .Values.services | nindent 12 }}
   selector:
     {{- include "project-zomboid.selectorLabels" . | nindent 4 }}

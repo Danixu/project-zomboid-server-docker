@@ -39,12 +39,11 @@ spec:
           env:
             {{- toYaml .Values.environments | nindent 12 }}
           ports:
-            - name: {{ .Values.gameService.name }}
-              containerPort: {{ .Values.gameService.port }}
-              protocol: UDP
-            - name: {{ .Values.gameDirectService.name }}
-              containerPort: {{ .Values.gameDirectService.port }}
-              protocol: UDP
+            {{- range .Values.services }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /
