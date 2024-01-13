@@ -61,7 +61,7 @@ services:
   - name: gameservice
     port: 16261
     protocol: UDP
-  - name: gamedirectservice
+  - name: directservice
     port: 16262
     protocol: UDP
 
