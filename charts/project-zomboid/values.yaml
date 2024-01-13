@@ -51,12 +51,12 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-gameService.service:
+gameService:
   name: GameService
   type: LoadBalancer
   port: 16261
 
-gameDirectService.service:
+gameDirectService:
   name: GameDirectService
   type: LoadBalancer
   port: 16262

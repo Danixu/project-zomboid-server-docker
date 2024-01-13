@@ -7,10 +7,10 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.gameService.service.port }}
-      targetPort: {{ .Values.gameService.service.port }}
+    - port: {{ .Values.gameService.port }}
+      targetPort: {{ .Values.gameService.port }}
       protocol: UDP
-      name: {{ .Values.gameService.service.name }}
+      name: {{ .Values.gameService.name }}
     - port: {{ .Values.gameDirectService.port }}
       targetPort: {{ .Values.gameDirectService.port }}
       protocol: UDP
