@@ -1,5 +1,5 @@
 ###########################################################
-# Dockerfile that builds a CSGO Gameserver
+# Dockerfile that builds a Project Zomboid Gameserver
 ###########################################################
 FROM cm2network/steamcmd:root
 
