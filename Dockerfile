@@ -5,10 +5,10 @@ FROM cm2network/steamcmd:root
 
 LABEL maintainer="daniel.carrasco@electrosoftcloud.com"
 
-ENV HOME "${HOMEDIR}"
-ENV STEAMAPPID 380870
-ENV STEAMAPP pz
-ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
+ENV HOME="${HOMEDIR}"
+ENV STEAMAPPID=380870
+ENV STEAMAPP=pz
+ENV STEAMAPPDIR="${HOMEDIR}/${STEAMAPP}-dedicated"
 
 # Install required packages
 RUN apt-get update \
