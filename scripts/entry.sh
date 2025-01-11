@@ -75,7 +75,7 @@ fi
 
 # You can choose a different servername by using this option when starting the server.
 if [ -n "${SERVERNAME}" ]; then
-  ARGS="${ARGS} -servername ${SERVERNAME}"
+  ARGS="${ARGS} -servername \"${SERVERNAME}\""
 else
   # If not servername is set, use the default name in the next step
   SERVERNAME="servertest"
