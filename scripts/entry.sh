@@ -34,6 +34,12 @@ fi
 # End of Java arguments
 ARGS="${ARGS} -- "
 
+# Runs a coop server instead of a dedicated server. Disables the default admin from being accessible.
+# - Default: Disabled
+if [ "${COOP}" == "1" ] || [ "${COOP,,}" == "true" ]; then
+  ARGS="${ARGS} -coop"
+fi
+
 # Disables Steam integration on server.
 # - Default: Enabled
 if [ "${NOSTEAM}" == "1" ] || [ "${NOSTEAM,,}" == "true" ]; then
@@ -58,6 +64,11 @@ fi
 # - Default: Disabled
 if [ "${DEBUG}" == "1" ] || [ "${DEBUG,,}" == "true" ]; then
   ARGS="${ARGS} -debug"
+fi
+
+# Option to set the admin username. Current admins will not be changed.
+if [ -n "${ADMINUSERNAME}" ]; then
+  ARGS="${ARGS} -adminusername ${ADMINUSERNAME}"
 fi
 
 # Option to bypasses the enter-a-password prompt when creating a server.
