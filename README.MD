@@ -12,6 +12,8 @@ https://hub.docker.com/r/danixu86/project-zomboid-dedicated-server
 
 This dockerfile converts some env variables to arguments in the server command, allowing to configure it. The image supports the following environment variables:
 
+`ADMINUSERNAME:` Sets the administrator username, otherwise `admin` will be used.
+
 `ADMINPASSWORD:` Sets or changes the admin password. Is mandatory at first startup or will fail. I recommend to remove it once the server is started because the server logs every argument in clear text (if doesn't cares, you can leave it).
 
 `PASSWORD:` Sets or changes server password. Is optional.
@@ -32,7 +34,7 @@ This dockerfile converts some env variables to arguments in the server command, 
 
 `PORT:` Set the server port. By default 16261
 
-`SERVERNAME:` Set the server name, which allows you to have multiple server versions. Changing the name will create a new server data, so current progress will not be available. Also will not be lost, just reverting the server name change will load it again.
+`SERVERNAME:` Set the server name, which allows you to have multiple server versions. Changing the name will create a new server data, so current progress will not be available. Also will not be lost, just reverting the server name change will load it again. **NOTE: Don't use spaces or special characters or admin user will fail**
 
 `SERVERPRESET:` Set the new servers default preset. If not set, the default is apocalypse. Allowed options are Apocalypse, Beginner, Builder, FirstWeek, SixMonthsLater, Survival and Survivor.
 
@@ -47,6 +49,8 @@ This dockerfile converts some env variables to arguments in the server command, 
 `WORKSHOP_IDS:` Semicolon separated list of Workshop IDs to install to the server
 
 `MOD_IDS:` Semicolon separated list of Mod IDs to install to the server
+
+`LANG:` This env variable will set the container locales, which will be used by the pz server to set the language. Example (en_EN.UTF-8, es_ES.UTF-8...)
 
 Mods will install on second server start
 
