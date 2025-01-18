@@ -18,6 +18,11 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+# Generate locales to allow other languages in the PZ Server
+RUN sed -i 's/^# *\(es_ES.UTF-8\)/\1/' /etc/locale.gen \
+  # Generate locale
+  && locale-gen
+
 # Download the Project Zomboid dedicated server app using the steamcmd app
 # Set the entry point file permissions
 RUN set -x \
