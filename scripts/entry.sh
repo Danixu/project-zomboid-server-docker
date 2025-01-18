@@ -79,10 +79,10 @@ if [ -n "${ADMINPASSWORD}" ]; then
   ARGS="${ARGS} -adminpassword ${ADMINPASSWORD}"
 fi
 
-# Server password
-if [ -n "${PASSWORD}" ]; then
-  ARGS="${ARGS} -password ${PASSWORD}"
-fi
+# Server password (Doesn't work)
+#if [ -n "${PASSWORD}" ]; then
+#  ARGS="${ARGS} -password ${PASSWORD}"
+#fi
 
 # You can choose a different servername by using this option when starting the server.
 if [ -n "${SERVERNAME}" ]; then
