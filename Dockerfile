@@ -33,10 +33,17 @@ RUN sed -i 's/^# *\(es_ES.UTF-8\)/\1/' /etc/locale.gen \
 RUN set -x \
   && mkdir -p "${STEAMAPPDIR}" \
   && chown -R "${USER}:${USER}" "${STEAMAPPDIR}" \
-  && bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
-  +login anonymous \
-  +app_update "${STEAMAPPID}" -beta "${STEAMAPPBRANCH}" validate \
-  +quit
+  && if [ "${STEAMAPPBRANCH}" = "public" ]; then \
+       bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
+       +login anonymous \
+       +app_update "${STEAMAPPID}" validate \
+       +quit; \
+     else \
+       bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
+       +login anonymous \
+       +app_update "${STEAMAPPID}" -beta "${STEAMAPPBRANCH}" validate \
+       +quit; \
+     fi
 
 # Copy the entry point file
 COPY --chown=${USER}:${USER} scripts/entry.sh /server/scripts/entry.sh
