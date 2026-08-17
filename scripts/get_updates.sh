@@ -9,7 +9,7 @@
 
 DOCKER_IMAGE="danixu86/project-zomboid-dedicated-server"
 PZ_URL_WEB="https://projectzomboid.com/blog/"
-PZ_URL_FORUM="https://theindiestone.com/forums/index.php?/forum/35-pz-updates/"
+PZ_URL_FORUM="https://theindiestone.com/forums/forum/35-pz-updates/"
 BUILD_UNSTABLE_VERSIONS=true
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -81,7 +81,7 @@ echo -e "\tUNSTABLE: ${LATEST_IMAGE_UNSTABLE_VERSION}"
 ##                                      ##
 ##########################################
 # Texts to search on the forum
-STABLE_TITLES="Released"
+STABLE_TITLES="STABLE"
 UNSTABLE_TITLES="BETA|HOTFIX|UNSTABLE"
 # Forum data
 FORUM_DATA=`curl -s "${PZ_URL_FORUM}"`
