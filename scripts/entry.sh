@@ -165,10 +165,14 @@ fi
 
 # Set an option in the server INI file: replace it when present, append it when missing.
 set_ini_option() {
-  if grep -q "^${1}=" "${SERVERINI}"; then
-    sed -i "s|^${1}=.*|${1}=${2}|" "${SERVERINI}"
+  local key="$1"
+  local value="$2"
+
+  if grep -q "^${key}=" "${SERVERINI}"; then
+    value=$(printf '%s' "$value" | sed 's/[&|\\]/\\&/g')
+    sed -i "s|^${key}=.*|${key}=${value}|" "${SERVERINI}"
   else
-    echo "${1}=${2}" >> "${SERVERINI}"
+    printf '%s=%s\n' "$key" "$value" >> "${SERVERINI}"
   fi
 }
 
