@@ -259,4 +259,77 @@ chown -R 1000:1000 /home/steam/pz-dedicated/steamapps/workshop /home/steam/Zombo
 # Fix it the adding back `rwx` permissions for the file owner (steam user)
 chmod 755 /home/steam/Zomboid
 
-su - steam -c "export LANG=${LANG} && export LD_LIBRARY_PATH=\"${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}\" && cd ${STEAMAPPDIR} && pwd && ./start-server.sh ${ARGS}"
+#############################################
+#                                           #
+# Graceful shutdown                         #
+#                                           #
+#############################################
+
+# Docker delivers SIGTERM to PID 1 only (this script) and never to the rest of the
+# process tree, and bash does not relay signals to its children. Previously the server
+# was launched as a plain foreground child, so the JVM never learned that a shutdown was
+# happening: `docker compose stop`, `docker compose down` and Ctrl+C all ended in a
+# SIGKILL after the grace period, losing every unsaved world change.
+#
+# The server reads console commands from stdin, and its `quit` command saves the world
+# and exits. So stdin is wired to a FIFO that this script keeps open, and a SIGTERM
+# handler writes `quit` into it and waits for the server to finish saving.
+#
+# NOTE: saving a large world can take well over Docker's default 10s grace period, so
+# `stop_grace_period` is raised in docker-compose.yml to match.
+SERVER_CONSOLE="/tmp/pz-console"
+rm -f "${SERVER_CONSOLE}"
+mkfifo "${SERVER_CONSOLE}"
+
+# Open the FIFO read-write and hold it for the lifetime of this script. Without a writer
+# held open, the server would read EOF on stdin as soon as it started and stop accepting
+# console commands.
+exec {CONSOLE_FD}<>"${SERVER_CONSOLE}"
+
+shutdown_server() {
+  # A second signal while the world is still saving must not restart the handler.
+  if [ -n "${SHUTDOWN_STARTED}" ]; then
+    return
+  fi
+  SHUTDOWN_STARTED=1
+
+  echo "*** INFO: Shutdown signal received, sending 'quit' to the server console to save the world ***"
+  printf 'quit\n' >&"${CONSOLE_FD}"
+
+  # Block until the server has written everything out and exited on its own.
+  #
+  # `wait` also returns 128+signal when *it* gets interrupted by a further signal, which
+  # is indistinguishable by status alone from the server having been killed. Retrying
+  # while the process is still alive is what keeps an impatient second Ctrl+C from
+  # abandoning a save that is still in progress. Once `wait` reaps the server the PID is
+  # gone, so `kill -0` fails and the loop ends.
+  while true; do
+    wait "${SERVER_PID}"
+    SHUTDOWN_EXIT=$?
+    if [ "${SHUTDOWN_EXIT}" -le 128 ] || ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+      break
+    fi
+    echo "*** INFO: Still saving, waiting for the server to finish ***"
+  done
+  echo "*** INFO: Server stopped cleanly with exit code ${SHUTDOWN_EXIT} ***"
+}
+
+# The redirection below is opened by this shell (still root) before `su` drops privileges,
+# so the server inherits an already-open descriptor and the FIFO's ownership is irrelevant.
+su - steam -c "export LANG=${LANG} && export LD_LIBRARY_PATH=\"${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}\" && cd ${STEAMAPPDIR} && pwd && ./start-server.sh ${ARGS}" <"${SERVER_CONSOLE}" &
+SERVER_PID=$!
+
+# Installed only once the PID is known, so the handler can never reference an unset PID.
+trap shutdown_server TERM INT
+
+wait "${SERVER_PID}"
+SERVER_EXIT=$?
+
+# If the handler ran, it already waited for the server's real exit status. The `wait`
+# above only reports 128+signal in that case, or an error if the handler reaped first.
+if [ -n "${SHUTDOWN_STARTED}" ]; then
+  SERVER_EXIT=${SHUTDOWN_EXIT:-0}
+fi
+
+rm -f "${SERVER_CONSOLE}"
+exit "${SERVER_EXIT}"

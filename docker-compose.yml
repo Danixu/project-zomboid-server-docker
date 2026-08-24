@@ -3,6 +3,10 @@ services:
   ProjectZomboidDedicatedServer:
     image: danixu86/project-zomboid-dedicated-server:latest
     restart: unless-stopped
+    # On SIGTERM the entrypoint sends `quit` to the server console and waits for the world
+    # to be saved. Docker's default grace period is 10s, which is not enough for a large
+    # world and would SIGKILL the server mid-save.
+    stop_grace_period: 120s
     build:
       context: .
       dockerfile: Dockerfile
