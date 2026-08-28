@@ -284,6 +284,13 @@ if [ -d "${WORKSHOP_CONTENT_DIR}" ]; then
   fi
 fi
 
+# The server picks its language from LANG, but a locale that was never generated in the
+# image is silently ignored by glibc, so the language change looks like it did nothing.
+# Warn about it instead, pointing at the build argument that generates extra locales.
+if [ -n "${LANG}" ] && ! locale -a 2>/dev/null | grep -qix "${LANG/.UTF-8/.utf8}"; then
+  echo "*** WARNING: the locale ${LANG} is not generated in this image, so the server will fall back to the default one. Rebuild the image with --build-arg EXTRA_LOCALES=\"${LANG}\" to add it ***"
+fi
+
 # Fix to a bug in start-server.sh that causes to no preload a library:
 # ERROR: ld.so: object 'libjsig.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"

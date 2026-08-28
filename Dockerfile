@@ -23,8 +23,14 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-# Generate locales to allow other languages in the PZ Server
-RUN sed -i 's/^# *\(es_ES.UTF-8\)/\1/' /etc/locale.gen \
+# Generate locales to allow other languages in the PZ Server.
+# The base image already generates en_US.UTF-8. Any other locale you want to be able to
+# select through the LANG variable has to be generated here, so list them (space
+# separated) in this argument.
+ARG EXTRA_LOCALES="es_ES.UTF-8"
+RUN for extra_locale in ${EXTRA_LOCALES}; do \
+      sed -i "s/^# *\(${extra_locale}\)/\1/" /etc/locale.gen; \
+    done \
   # Generate locale
   && locale-gen
 

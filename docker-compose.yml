@@ -9,6 +9,8 @@ services:
       args:
         # Reads STEAMAPPBRANCH from your .env file to set the build version (ARG).
         - STEAMAPPBRANCH=${STEAMAPPBRANCH}
+        # Extra locales to generate in the image, so they can be selected with LANG.
+        - EXTRA_LOCALES=${EXTRA_LOCALES:-es_ES.UTF-8}
     env_file:
       - .env
     ports:
