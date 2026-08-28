@@ -16,7 +16,16 @@ fi
 
 if [ "${FORCEUPDATE}" == "1" ] || [ "${FORCEUPDATE,,}" == "true" ]; then
   echo "FORCEUPDATE variable is set, so the server will be updated right now"
-  bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" +login anonymous +app_update "${STEAMAPPID}" -beta "${STEAMAPPBRANCH}" validate +quit
+  # The public branch is not a beta: passing `-beta public` makes SteamCMD look for a
+  # non existent beta, so the update silently does nothing and the server keeps running
+  # the version baked into the image. This is the same condition the Dockerfile uses at
+  # build time.
+  if [ -z "${STEAMAPPBRANCH}" ] || [ "${STEAMAPPBRANCH}" == "public" ]; then
+    STEAMAPPBRANCH_ARGS=()
+  else
+    STEAMAPPBRANCH_ARGS=(-beta "${STEAMAPPBRANCH}")
+  fi
+  bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" +login anonymous +app_update "${STEAMAPPID}" "${STEAMAPPBRANCH_ARGS[@]}" validate +quit
 fi
 
 
