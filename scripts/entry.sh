@@ -34,58 +34,60 @@ fi
 # Process the arguments in variables #
 #                                    #
 ######################################
-ARGS=""
+# Arguments are collected in an array so that every value is passed to the server as a
+# single argument, no matter what characters it contains.
+ARGS=()
 
 # Set the server memory. Units are accepted (1024m=1Gig, 2048m=2Gig, 4096m=4Gig): Example: 1024m
 if [ -n "${MIN_MEMORY}" ] && [ -n "${MAX_MEMORY}" ]; then
-  ARGS="${ARGS} -Xms${MIN_MEMORY} -Xmx${MAX_MEMORY}"
+  ARGS+=("-Xms${MIN_MEMORY}" "-Xmx${MAX_MEMORY}")
 elif [ -n "${MEMORY}" ]; then
-  ARGS="${ARGS} -Xms${MEMORY} -Xmx${MEMORY}"
+  ARGS+=("-Xms${MEMORY}" "-Xmx${MEMORY}")
 fi
 
 # Option to perform a Soft Reset
 if [ "${SOFTRESET}" == "1" ] || [ "${SOFTRESET,,}" == "true" ]; then
-  ARGS="${ARGS} -Dsoftreset"
+  ARGS+=("-Dsoftreset")
 fi
 
 # End of Java arguments
-ARGS="${ARGS} -- "
+ARGS+=("--")
 
 # Runs a coop server instead of a dedicated server. Disables the default admin from being accessible.
 # - Default: Disabled
 if [ "${COOP}" == "1" ] || [ "${COOP,,}" == "true" ]; then
-  ARGS="${ARGS} -coop"
+  ARGS+=("-coop")
 fi
 
 # Disables Steam integration on server.
 # - Default: Enabled
 if [ "${NOSTEAM}" == "1" ] || [ "${NOSTEAM,,}" == "true" ]; then
-  ARGS="${ARGS} -nosteam"
+  ARGS+=("-nosteam")
 fi
 
 # Sets the path for the game data cache dir.
 # - Default: ~/Zomboid
 # - Example: /server/Zomboid/data
 if [ -n "${CACHEDIR}" ]; then
-  ARGS="${ARGS} -cachedir=${CACHEDIR}"
+  ARGS+=("-cachedir=${CACHEDIR}")
 fi
 
 # Option to control where mods are loaded from and the order. Any of the 3 keywords may be left out and may appear in any order.
 # - Default: workshop,steam,mods
 # - Example: mods,steam
 if [ -n "${MODFOLDERS}" ]; then
-  ARGS="${ARGS} -modfolders ${MODFOLDERS}"
+  ARGS+=("-modfolders" "${MODFOLDERS}")
 fi
 
 # Launches the game in debug mode.
 # - Default: Disabled
 if [ "${DEBUG}" == "1" ] || [ "${DEBUG,,}" == "true" ]; then
-  ARGS="${ARGS} -debug"
+  ARGS+=("-debug")
 fi
 
 # Option to set the admin username. Current admins will not be changed.
 if [ -n "${ADMINUSERNAME}" ]; then
-  ARGS="${ARGS} -adminusername ${ADMINUSERNAME}"
+  ARGS+=("-adminusername" "${ADMINUSERNAME}")
 fi
 
 # Option to bypasses the enter-a-password prompt when creating a server.
@@ -93,17 +95,17 @@ fi
 # Once is launched and data is created, then can be removed without problem.
 # Is recommended to remove it, because the server logs the arguments in clear text, so Admin password will be sent to log in every startup.
 if [ -n "${ADMINPASSWORD}" ]; then
-  ARGS="${ARGS} -adminpassword ${ADMINPASSWORD}"
+  ARGS+=("-adminpassword" "${ADMINPASSWORD}")
 fi
 
 # Server password (Doesn't work)
 #if [ -n "${PASSWORD}" ]; then
-#  ARGS="${ARGS} -password ${PASSWORD}"
+#  ARGS+=("-password" "${PASSWORD}")
 #fi
 
 # You can choose a different servername by using this option when starting the server.
 if [ -n "${SERVERNAME}" ]; then
-  ARGS="${ARGS} -servername \"${SERVERNAME}\""
+  ARGS+=("-servername" "${SERVERNAME}")
 else
   # If not servername is set, use the default name in the next step
   SERVERNAME="servertest"
@@ -131,17 +133,17 @@ fi
 
 # Option to handle multiple network cards. Example: 127.0.0.1
 if [ -n "${IP}" ]; then
-  ARGS="${ARGS} ${IP} -ip ${IP}"
+  ARGS+=("${IP}" "-ip" "${IP}")
 fi
 
 # Set the DefaultPort for the server. Example: 16261
 if [ -n "${PORT}" ]; then
-  ARGS="${ARGS} -port ${PORT}"
+  ARGS+=("-port" "${PORT}")
 fi
 
 # Option to enable/disable VAC on Steam servers. On the server command-line use -steamvac true/false. In the server's INI file, use STEAMVAC=true/false.
 if [ -n "${STEAMVAC}" ] && { [ "${STEAMVAC,,}" == "true" ] || [ "${STEAMVAC,,}" == "false" ]; }; then
-  ARGS="${ARGS} -steamvac ${STEAMVAC,,}"
+  ARGS+=("-steamvac" "${STEAMVAC,,}")
 fi
 
 # Steam servers require two additional ports to function (I'm guessing they are both UDP ports, but you may need TCP as well).
@@ -149,10 +151,10 @@ fi
 #  - In the server's INI file as SteamPort1= and SteamPort2=.
 #  - Using STEAMPORT1 and STEAMPORT2 variables.
 if [ -n "${STEAMPORT1}" ]; then
-  ARGS="${ARGS} -steamport1 ${STEAMPORT1}"
+  ARGS+=("-steamport1" "${STEAMPORT1}")
 fi
 if [ -n "${STEAMPORT2}" ]; then
-  ARGS="${ARGS} -steamport2 ${STEAMPORT2}"
+  ARGS+=("-steamport2" "${STEAMPORT2}")
 fi
 
 #############################################
@@ -357,9 +359,18 @@ shutdown_server() {
   echo "*** INFO: Server stopped cleanly with exit code ${SHUTDOWN_EXIT} ***"
 }
 
-# The redirection below is opened by this shell (still root) before `su` drops privileges,
-# so the server inherits an already-open descriptor and the FIFO's ownership is irrelevant.
-su - steam -c "export LANG=${LANG} && export LD_LIBRARY_PATH=\"${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}\" && cd ${STEAMAPPDIR} && pwd && ./start-server.sh ${ARGS}" <"${SERVER_CONSOLE}" &
+# `su -c` hands its argument to a shell, which parses it a second time and splits every
+# value on whitespace. `runuser -u ... --` execs the command directly instead, so each
+# element of ARGS reaches the server as one argument. It also keeps the environment (and
+# so LANG and LD_LIBRARY_PATH, exported above) instead of resetting it like `su -` does.
+#
+# The redirection below is opened by this shell (still root) before privileges are
+# dropped, so the server inherits an already-open descriptor and the FIFO's ownership is
+# irrelevant.
+export LANG
+cd "${STEAMAPPDIR}" || exit 1
+pwd
+runuser -u steam -- ./start-server.sh "${ARGS[@]}" <"${SERVER_CONSOLE}" &
 SERVER_PID=$!
 
 # Installed only once the PID is known, so the handler can never reference an unset PID.
