@@ -18,13 +18,13 @@ search_folder() {
                 
                         # Copy maps to map folder
                         source_dirs=("$mod_folder/media/maps"/*)
-                        map_dir=("${HOMEDIR}/pz-dedicated/media/maps")
+                        map_dir="${STEAMAPPDIR}/media/maps"
 
                         for source_dir in "${source_dirs[@]}"; do
                             dir_name=$(basename "$source_dir")
                             if [ ! -d "$map_dir/$dir_name" ]; then
                                 echo "Found map(s). Copying..."
-                                cp -r "$mod_folder/media/maps"/* "${HOMEDIR}/pz-dedicated/media/maps"
+                                cp -r "$mod_folder/media/maps"/* "${map_dir}"
                                 echo "Successfully copied!"
                             fi
                         done

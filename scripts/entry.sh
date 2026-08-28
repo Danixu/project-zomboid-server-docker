@@ -234,7 +234,7 @@ fi
 # Fixes EOL in script file for good measure
 sed -i 's/\r$//' /server/scripts/search_folder.sh
 # Check 'search_folder.sh' script for details
-WORKSHOP_CONTENT_DIR="${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600"
+WORKSHOP_CONTENT_DIR="${STEAMAPPDIR}/steamapps/workshop/content/108600"
 MAPS_FILE="${HOMEDIR}/maps.txt"
 SPAWNREGIONS_FILE="${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"
 
@@ -270,7 +270,7 @@ if [ -d "${WORKSHOP_CONTENT_DIR}" ]; then
       IFS=";" read -ra strings <<< "$map_list"
       for string in "${strings[@]}"; do
           if ! grep -q "$string" "${SPAWNREGIONS_FILE}"; then
-            if [ -e "${HOMEDIR}/pz-dedicated/media/maps/$string/spawnpoints.lua" ]; then
+            if [ -e "${STEAMAPPDIR}/media/maps/$string/spawnpoints.lua" ]; then
               result="{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },"
               sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
               \\\t\t$result
@@ -296,10 +296,10 @@ fi
 export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"
 
 ## Fix the permissions in the data and workshop folders
-chown -R 1000:1000 /home/steam/pz-dedicated/steamapps/workshop /home/steam/Zomboid
+chown -R "${USER}:${USER}" "${STEAMAPPDIR}/steamapps/workshop" "${HOMEDIR}/Zomboid"
 # When binding a host folder with Docker to the container, the resulting folder has these permissions "d---" (i.e. NO `rwx`) 
 # which will cause runtime issues after launching the server.
 # Fix it the adding back `rwx` permissions for the file owner (steam user)
-chmod 755 /home/steam/Zomboid
+chmod 755 "${HOMEDIR}/Zomboid"
 
 su - steam -c "export LANG=${LANG} && export LD_LIBRARY_PATH=\"${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}\" && cd ${STEAMAPPDIR} && pwd && ./start-server.sh ${ARGS}"
