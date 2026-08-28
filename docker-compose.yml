@@ -12,8 +12,11 @@ services:
     env_file:
       - .env
     ports:
-      - "16261:16261/udp"
-      - "16262:16262/udp"
+      # Follow the PORT and UDPPORT variables from the .env file. With the ports hardcoded,
+      # changing them left the server listening on a port that was never published, so it
+      # was unreachable from outside the container.
+      - "${PORT:-16261}:${PORT:-16261}/udp"
+      - "${UDPPORT:-16262}:${UDPPORT:-16262}/udp"
       - "27015:27015/tcp"
     volumes:
       # Server data
