@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   ProjectZomboidDedicatedServer:
     image: danixu86/project-zomboid-dedicated-server:latest
