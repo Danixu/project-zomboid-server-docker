@@ -1,13 +1,18 @@
 #!/bin/bash
 
+# An empty folder would otherwise leave the glob unexpanded and the loops would run once
+# with a path that ends in a literal "*".
+shopt -s nullglob
+
 # Function to recursively search for a folder name
 search_folder() {
     local search_dir="$1"
+    local items=("$search_dir"/*)
     counter=1
 
-    for item in "$search_dir"/*; do
+    for item in "${items[@]}"; do
 
-        echo "Searching for maps: ($counter/$(ls -1 "$search_dir" | wc -l))"
+        echo "Searching for maps: ($counter/${#items[@]})"
 
         # Check if the given directory exists
         if [ -d "$search_dir" ]; then                
@@ -23,8 +28,11 @@ search_folder() {
                         for source_dir in "${source_dirs[@]}"; do
                             dir_name=$(basename "$source_dir")
                             if [ ! -d "$map_dir/$dir_name" ]; then
-                                echo "Found map(s). Copying..."
-                                cp -r "$mod_folder/media/maps"/* "${map_dir}"
+                                echo "Found map(s). Copying $dir_name..."
+                                # Copy only the map that is missing. Copying the whole
+                                # folder re-copied (and overwrote) every map the mod
+                                # ships as soon as a single one of them was missing.
+                                cp -r "$source_dir" "${map_dir}"
                                 echo "Successfully copied!"
                             fi
                         done
