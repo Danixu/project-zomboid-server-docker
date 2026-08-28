@@ -64,7 +64,7 @@ This image uses some env variables as arguments in the server command, allowing 
 
 `WORKSHOP_IDS:` Semicolon separated list of Workshop IDs to install to the server. Leaving this empty will clear any existing value!
 
-`MOD_IDS:` Semicolon separated list of Mod IDs to install to the server. NOTE - B42 changes the way mod IDs must be supplied (\mod1;\mod2 inside the servertest.ini file) when defining this variable, preceed each mod id with two backslashes (\\) to escape the backslash into the ini file.
+`MOD_IDS:` Semicolon separated list of Mod IDs to install to the server. NOTE - B42 changes the way mod IDs must be supplied (\mod1;\mod2 inside the servertest.ini file) when defining this variable, preceed each mod id with two backslashes (\\) to escape the backslash into the ini file. Leaving this empty will clear any existing value, the same way `WORKSHOP_IDS` does. Use `SELF_MANAGED_MODS` if you want to keep the value written in the INI file.
 
 `SELF_MANAGED_MODS:` When set to `1` or `true`, the container will NOT modify the `Mods` or `WorkshopItems` entries in the server INI. Use this if you manage mods/workshop items externally (for example via bind mounts or an external workshop manager). Default behavior (when unset or `false`) is for the entrypoint script to update `Mods` and `WorkshopItems` based on `MOD_IDS`/`WORKSHOP_IDS`.
 

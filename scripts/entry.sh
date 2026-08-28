@@ -217,6 +217,9 @@ else
   if [ -n "${MOD_IDS}" ]; then
     echo "*** INFO: Found Mods including ${MOD_IDS} ***"
     set_ini_option "Mods" "${MOD_IDS}"
+  else
+    echo "*** INFO: Mod IDs is empty, clearing configuration ***"
+    set_ini_option "Mods" ""
   fi
 
   if [ -n "${WORKSHOP_IDS}" ]; then
