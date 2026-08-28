@@ -1,0 +1,8 @@
+# The shell scripts are copied into a Linux image and executed there, so they must keep
+# LF endings no matter what core.autocrlf is set to on the machine that clones the repo.
+# A CRLF checkout is what the `dos2unix` call in the Dockerfile and the `sed -i 's/\r$//'`
+# in the entrypoint are working around at runtime.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+.env.template text eol=lf
