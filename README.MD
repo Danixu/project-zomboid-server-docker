@@ -28,6 +28,8 @@ This image uses some env variables as arguments in the server command, allowing 
 
 `CACHEDIR:` Set the folder where the data will be stored. By default the server stores the data in the Zomboid folder in home directory (/home/steam/Zomboid). Is recommended to store this data into a persistent volume to keep the server state.
 
+`COOP:` Runs a coop server instead of a dedicated server. Disables the default admin from being accessible. Disabled by default.
+
 `DEBUG:` Enable the debug mode in server
 
 `FORCEUPDATE:` Force a server update on every start. This process can be slow if the image is old.
@@ -72,7 +74,7 @@ This image uses some env variables as arguments in the server command, allowing 
 
 Mods will install on second server start
 
-Maps are added on third server start, after mods are added
+Maps are added on the same start on which the mods are detected, right after the workshop items have been downloaded.
 
 ## Build time environment variables
 
