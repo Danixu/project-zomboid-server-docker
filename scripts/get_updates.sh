@@ -168,9 +168,18 @@ if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
   if [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
     echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
 
-    docker build --compress --no-cache --build-arg STEAMAPPBRANCH=unstable -t ${DOCKER_IMAGE}:latest-unstable -t ${DOCKER_IMAGE}:${LATEST_UNSTABLE_VERSION}-unstable .
-    docker push ${DOCKER_IMAGE}:${LATEST_UNSTABLE_VERSION}-unstable
-    docker push ${DOCKER_IMAGE}:latest-unstable
+    # An empty version would build the invalid tag "<image>:-unstable", but above all it
+    # means the version detection failed and the script should stop instead of publishing
+    # something wrong.
+    if [ -z "${LATEST_UNSTABLE_VERSION}" ] || [ "${LATEST_UNSTABLE_VERSION}" == "0.0.0" ]; then
+      echo -e "\n\n*** ERROR: no unstable version could be detected in the forum or the website, aborting ***\n\n"
+      exit 1
+    fi
+
+    # Stop at the first failure instead of pushing tags that were never built.
+    docker build --compress --no-cache --build-arg STEAMAPPBRANCH=unstable -t ${DOCKER_IMAGE}:latest-unstable -t ${DOCKER_IMAGE}:${LATEST_UNSTABLE_VERSION}-unstable . || exit 1
+    docker push ${DOCKER_IMAGE}:${LATEST_UNSTABLE_VERSION}-unstable || exit 1
+    docker push ${DOCKER_IMAGE}:latest-unstable || exit 1
   elif [ $NEW_VERSION == 0 ]; then
     echo -e "\n\nThere is no new unstable version of the Zomboid server\n\n"
   elif [ $NEW_VERSION == -1 ]; then
@@ -189,10 +198,21 @@ NEW_VERSION=$(versionCompare ${LATEST_STABLE_VERSION} ${LATEST_IMAGE_STABLE_VERS
 if [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
   echo -e "\n\nA new version of the stable server was detected ($LATEST_STABLE_VERSION). Creating the new image...\n"
 
-  docker build --compress --no-cache -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:latest-release -t ${DOCKER_IMAGE}:${LATEST_STABLE_VERSION}-release .
-  docker push ${DOCKER_IMAGE}:${LATEST_STABLE_VERSION}-release
-  docker push ${DOCKER_IMAGE}:latest-release
-  docker push ${DOCKER_IMAGE}:latest
+  # An empty version would build the invalid tag "<image>:-release", but above all it
+  # means the version detection failed and the script should stop instead of publishing
+  # something wrong.
+  if [ -z "${LATEST_STABLE_VERSION}" ] || [ "${LATEST_STABLE_VERSION}" == "0.0.0" ]; then
+    echo -e "\n\n*** ERROR: no stable version could be detected in the forum or the website, aborting ***\n\n"
+    exit 1
+  fi
+
+  # Stop at the first failure. Only the exit status of the last push used to be reported,
+  # so a failed build or a failed intermediate push was masked by the "latest" push that
+  # followed it and the job still looked green.
+  docker build --compress --no-cache -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:latest-release -t ${DOCKER_IMAGE}:${LATEST_STABLE_VERSION}-release . || exit 1
+  docker push ${DOCKER_IMAGE}:${LATEST_STABLE_VERSION}-release || exit 1
+  docker push ${DOCKER_IMAGE}:latest-release || exit 1
+  docker push ${DOCKER_IMAGE}:latest || exit 1
 elif [ $NEW_VERSION == 0 ]; then
   echo -e "\n\nThere is no new stable version of the Zomboid server\n\n"
 elif [ $NEW_VERSION == -1 ]; then
