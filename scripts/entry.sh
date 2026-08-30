@@ -16,7 +16,16 @@ fi
 
 if [ "${FORCEUPDATE}" == "1" ] || [ "${FORCEUPDATE,,}" == "true" ]; then
   echo "FORCEUPDATE variable is set, so the server will be updated right now"
-  bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" +login anonymous +app_update "${STEAMAPPID}" -beta "${STEAMAPPBRANCH}" validate +quit
+  # The public branch is not a beta: passing `-beta public` makes SteamCMD look for a
+  # non existent beta, so the update silently does nothing and the server keeps running
+  # the version baked into the image. This is the same condition the Dockerfile uses at
+  # build time.
+  if [ -z "${STEAMAPPBRANCH}" ] || [ "${STEAMAPPBRANCH}" == "public" ]; then
+    STEAMAPPBRANCH_ARGS=()
+  else
+    STEAMAPPBRANCH_ARGS=(-beta "${STEAMAPPBRANCH}")
+  fi
+  bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" +login anonymous +app_update "${STEAMAPPID}" "${STEAMAPPBRANCH_ARGS[@]}" validate +quit
 fi
 
 
@@ -208,6 +217,9 @@ else
   if [ -n "${MOD_IDS}" ]; then
     echo "*** INFO: Found Mods including ${MOD_IDS} ***"
     set_ini_option "Mods" "${MOD_IDS}"
+  else
+    echo "*** INFO: Mod IDs is empty, clearing configuration ***"
+    set_ini_option "Mods" ""
   fi
 
   if [ -n "${WORKSHOP_IDS}" ]; then
@@ -222,30 +234,61 @@ fi
 # Fixes EOL in script file for good measure
 sed -i 's/\r$//' /server/scripts/search_folder.sh
 # Check 'search_folder.sh' script for details
-if [ -e "${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600" ]; then
+WORKSHOP_CONTENT_DIR="${STEAMAPPDIR}/steamapps/workshop/content/108600"
+MAPS_FILE="${HOMEDIR}/maps.txt"
+SPAWNREGIONS_FILE="${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"
 
+if [ -d "${WORKSHOP_CONTENT_DIR}" ]; then
+
+  # Run the script as a child process instead of sourcing it: it ends with `exit 1` when
+  # the folder is not a directory, and while sourced that exit tears down this entrypoint
+  # (and with it the container) before the server is ever started.
+  # The script only ever appends to the file, so drop any leftover from a previous run.
   map_list=""
-  source /server/scripts/search_folder.sh "${HOMEDIR}/pz-dedicated/steamapps/workshop/content/108600"
-  map_list=$(<"${HOMEDIR}/maps.txt")  
-  rm "${HOMEDIR}/maps.txt"
+  rm -f "${MAPS_FILE}"
+  bash /server/scripts/search_folder.sh "${WORKSHOP_CONTENT_DIR}"
+
+  # The file is only written when at least one of the installed mods ships maps, which is
+  # not the case for most mod sets. Reading it unconditionally printed two errors
+  # ("No such file or directory") on every single start.
+  if [ -f "${MAPS_FILE}" ]; then
+    map_list=$(<"${MAPS_FILE}")
+    rm -f "${MAPS_FILE}"
+  fi
 
   if [ -n "${map_list}" ]; then
     echo "*** INFO: Added maps including ${map_list} ***"
-    sed -i "s/Map=.*/Map=${map_list}Muldraugh, KY/" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}.ini"
+    # A `sed` substitution can only rewrite an already existing Map= line. On a brand new
+    # server the INI is still empty at this point, so the maps were silently dropped and
+    # only showed up after an extra restart. set_ini_option appends it when missing.
+    set_ini_option "Map" "${map_list}Muldraugh, KY"
 
     # Checks which added maps have spawnpoints.lua files and adds them to the spawnregions file if they aren't already added
-    IFS=";" read -ra strings <<< "$map_list"
-    for string in "${strings[@]}"; do
-        if ! grep -q "$string" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"; then
-          if [ -e "${HOMEDIR}/pz-dedicated/media/maps/$string/spawnpoints.lua" ]; then
-            result="{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },"
-            sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
-            \\\t\t$result
-            }" "${HOMEDIR}/Zomboid/Server/${SERVERNAME}_spawnregions.lua"
+    # The server writes the spawnregions file itself on its first run, so it may not be
+    # there yet. Editing it unconditionally failed with an error on every new server.
+    if [ -f "${SPAWNREGIONS_FILE}" ]; then
+      IFS=";" read -ra strings <<< "$map_list"
+      for string in "${strings[@]}"; do
+          if ! grep -q "$string" "${SPAWNREGIONS_FILE}"; then
+            if [ -e "${STEAMAPPDIR}/media/maps/$string/spawnpoints.lua" ]; then
+              result="{ name = \"$string\", file = \"media/maps/$string/spawnpoints.lua\" },"
+              sed -i "/function SpawnRegions()/,/return {/ {    /return {/ a\
+              \\\t\t$result
+              }" "${SPAWNREGIONS_FILE}"
+            fi
           fi
-        fi
-    done
-  fi 
+      done
+    else
+      echo "*** INFO: The spawn regions file does not exist yet, the spawn points of the new maps will be added on the next start ***"
+    fi
+  fi
+fi
+
+# The server picks its language from LANG, but a locale that was never generated in the
+# image is silently ignored by glibc, so the language change looks like it did nothing.
+# Warn about it instead, pointing at the build argument that generates extra locales.
+if [ -n "${LANG}" ] && ! locale -a 2>/dev/null | grep -qix "${LANG/.UTF-8/.utf8}"; then
+  echo "*** WARNING: the locale ${LANG} is not generated in this image, so the server will fall back to the default one. Rebuild the image with --build-arg EXTRA_LOCALES=\"${LANG}\" to add it ***"
 fi
 
 # Fix to a bug in start-server.sh that causes to no preload a library:
@@ -253,11 +296,11 @@ fi
 export LD_LIBRARY_PATH="${STEAMAPPDIR}/jre64/lib:${LD_LIBRARY_PATH}"
 
 ## Fix the permissions in the data and workshop folders
-chown -R 1000:1000 /home/steam/pz-dedicated/steamapps/workshop /home/steam/Zomboid
+chown -R "${USER}:${USER}" "${STEAMAPPDIR}/steamapps/workshop" "${HOMEDIR}/Zomboid"
 # When binding a host folder with Docker to the container, the resulting folder has these permissions "d---" (i.e. NO `rwx`) 
 # which will cause runtime issues after launching the server.
 # Fix it the adding back `rwx` permissions for the file owner (steam user)
-chmod 755 /home/steam/Zomboid
+chmod 755 "${HOMEDIR}/Zomboid"
 
 #############################################
 #                                           #

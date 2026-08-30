@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   ProjectZomboidDedicatedServer:
     image: danixu86/project-zomboid-dedicated-server:latest
@@ -13,11 +12,16 @@ services:
       args:
         # Reads STEAMAPPBRANCH from your .env file to set the build version (ARG).
         - STEAMAPPBRANCH=${STEAMAPPBRANCH}
+        # Extra locales to generate in the image, so they can be selected with LANG.
+        - EXTRA_LOCALES=${EXTRA_LOCALES:-es_ES.UTF-8}
     env_file:
       - .env
     ports:
-      - "16261:16261/udp"
-      - "16262:16262/udp"
+      # Follow the PORT and UDPPORT variables from the .env file. With the ports hardcoded,
+      # changing them left the server listening on a port that was never published, so it
+      # was unreachable from outside the container.
+      - "${PORT:-16261}:${PORT:-16261}/udp"
+      - "${UDPPORT:-16262}:${UDPPORT:-16262}/udp"
       - "27015:27015/tcp"
     volumes:
       # Server data

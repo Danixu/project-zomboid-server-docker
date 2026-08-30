@@ -28,6 +28,8 @@ This image uses some env variables as arguments in the server command, allowing 
 
 `CACHEDIR:` Set the folder where the data will be stored. By default the server stores the data in the Zomboid folder in home directory (/home/steam/Zomboid). Is recommended to store this data into a persistent volume to keep the server state.
 
+`COOP:` Runs a coop server instead of a dedicated server. Disables the default admin from being accessible. Disabled by default.
+
 `DEBUG:` Enable the debug mode in server
 
 `FORCEUPDATE:` Force a server update on every start. This process can be slow if the image is old.
@@ -64,15 +66,15 @@ This image uses some env variables as arguments in the server command, allowing 
 
 `WORKSHOP_IDS:` Semicolon separated list of Workshop IDs to install to the server. Leaving this empty will clear any existing value!
 
-`MOD_IDS:` Semicolon separated list of Mod IDs to install to the server. NOTE - B42 changes the way mod IDs must be supplied (\mod1;\mod2 inside the servertest.ini file) when defining this variable, preceed each mod id with two backslashes (\\) to escape the backslash into the ini file.
+`MOD_IDS:` Semicolon separated list of Mod IDs to install to the server. NOTE - B42 changes the way mod IDs must be supplied (\mod1;\mod2 inside the servertest.ini file) when defining this variable, preceed each mod id with two backslashes (\\) to escape the backslash into the ini file. Leaving this empty will clear any existing value, the same way `WORKSHOP_IDS` does. Use `SELF_MANAGED_MODS` if you want to keep the value written in the INI file.
 
 `SELF_MANAGED_MODS:` When set to `1` or `true`, the container will NOT modify the `Mods` or `WorkshopItems` entries in the server INI. Use this if you manage mods/workshop items externally (for example via bind mounts or an external workshop manager). Default behavior (when unset or `false`) is for the entrypoint script to update `Mods` and `WorkshopItems` based on `MOD_IDS`/`WORKSHOP_IDS`.
 
-`LANG:` This env variable will set the container locales, which will be used by the pz server to set the language. Example (en_EN.UTF-8, es_ES.UTF-8...)
+`LANG:` This env variable will set the container locales, which will be used by the pz server to set the language. Example (en_US.UTF-8, es_ES.UTF-8...). Only the locales generated in the image can be used: the base image provides `en_US.UTF-8` and the image adds the ones listed in the `EXTRA_LOCALES` build argument. A warning is printed on startup when the requested locale is missing.
 
 Mods will install on second server start
 
-Maps are added on third server start, after mods are added
+Maps are added on the same start on which the mods are detected, right after the workshop items have been downloaded.
 
 ## Build time environment variables
 
