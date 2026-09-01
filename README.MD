@@ -6,7 +6,7 @@ The ready to use image is available here:
 
 https://hub.docker.com/r/danixu86/project-zomboid-dedicated-server
 
-> **Note:** If you want to play **Build 42** multiplayer, you must set the `STEAMAPPBRANCH` [environment variable](#run-time-environment-variables) to `unstable`.
+> **Note:** Build 42 is now the stable build, so the default image already runs it. The `unstable` branch this note used to point at no longer exists on Steam: setting `STEAMAPPBRANCH` to it today fails the build with `ERROR! Failed to set beta 'unstable'`. See [SteamDB](https://steamdb.info/app/108600/depots/) for the branches that currently exist.
 
 **WARNING:** Running the image on Windows using WSL2 in Docker Desktop will make the server startup times significantly slower. This is fine unless you are running alot of mods in which case server startup times may vary from 15 - 40 minutes. The best way to solve this problem is to run your container on a Linux based system or in a Linux VM.
 
@@ -80,12 +80,12 @@ Maps are added on the same start on which the mods are detected, right after the
 
 This env variables will be used at build time to generate the image.
 
-`STEAMAPPBRANCH:` Sets the Project Zomboid branch to download (e.g., `unstable`). If not set, the stable (public) branch will be downloaded. You can see a list of branches in the [SteamDB website](https://steamdb.info/app/108600/depots/).
+`STEAMAPPBRANCH:` Sets the Project Zomboid beta branch to download. If not set, the stable (public) branch is used, which is what you want unless a beta is currently open. You can see a list of branches in the [SteamDB website](https://steamdb.info/app/108600/depots/).
 
 This will work only when using the `docker compose` command. If you are building the image using the `docker build` command, then must be passed as argument, for example:
 
 ```bash
-docker build --compress --no-cache --build-arg STEAMAPPBRANCH=unstable .
+docker build --compress --no-cache --build-arg STEAMAPPBRANCH=<branch-name> .
 ```
 
 ## Soft Reset
