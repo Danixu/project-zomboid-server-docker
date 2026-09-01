@@ -11,6 +11,11 @@ DOCKER_IMAGE="danixu86/project-zomboid-dedicated-server"
 PZ_URL_WEB="https://projectzomboid.com/blog/"
 PZ_URL_FORUM="https://theindiestone.com/forums/forum/35-pz-updates/"
 BUILD_UNSTABLE_VERSIONS=true
+# Build even when the detected server version is not newer than the published image. The
+# image is only rebuilt when Project Zomboid itself gets a new version, so a change to the
+# Dockerfile or to the scripts never reaches Docker Hub on its own. The result is published
+# as a new revision of the current version, never on top of the existing tag.
+FORCE_BUILD="${FORCE_BUILD:-false}"
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "${SCRIPT_DIR}/../"
@@ -174,8 +179,12 @@ if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
 
   if [ "${UNSTABLE_AHEAD}" != 1 ]; then
     echo -e "\n\nThe detected unstable version (${LATEST_UNSTABLE_VERSION}) is not ahead of the stable one (${LATEST_STABLE_VERSION}), so there is no open beta right now. Skipping the unstable image.\n\n"
-  elif [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
-    echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
+  elif [ "${FORCE_BUILD}" == "true" ] || [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+    if [ "${FORCE_BUILD}" == "true" ]; then
+      echo -e "\n\nFORCE_BUILD is set, rebuilding the unstable image ($LATEST_UNSTABLE_VERSION) as a new revision...\n"
+    else
+      echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
+    fi
 
     # An empty version would build the invalid tag "<image>:-unstable", but above all it
     # means the version detection failed and the script should stop instead of publishing
@@ -216,8 +225,12 @@ echo -e "\n\n*******************************************************************
 echo "Checking the latest stable version..."
 NEW_VERSION=$(versionCompare ${LATEST_STABLE_VERSION} ${LATEST_IMAGE_STABLE_VERSION})
 
-if [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
-  echo -e "\n\nA new version of the stable server was detected ($LATEST_STABLE_VERSION). Creating the new image...\n"
+if [ "${FORCE_BUILD}" == "true" ] || [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+  if [ "${FORCE_BUILD}" == "true" ]; then
+    echo -e "\n\nFORCE_BUILD is set, rebuilding the stable image ($LATEST_STABLE_VERSION) as a new revision...\n"
+  else
+    echo -e "\n\nA new version of the stable server was detected ($LATEST_STABLE_VERSION). Creating the new image...\n"
+  fi
 
   # An empty version would build the invalid tag "<image>:-release", but above all it
   # means the version detection failed and the script should stop instead of publishing

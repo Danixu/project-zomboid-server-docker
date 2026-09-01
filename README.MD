@@ -154,3 +154,7 @@ In the scripts folders there are three scripts:
 * entry.sh: The script used in the image to start the server
 * search_folder.sh: Script to search through mod folders for any maps
 * get_updates.sh: will perform a search of the latest version on the forum and the website to download and build the latest stable and unstable version. The local image will be created and it will try to upload the image to the Dockerhub website, but it will fail by the lack of permissions.
+
+The image is only rebuilt when Project Zomboid itself gets a new version, so a change to the Dockerfile or to the scripts does not reach Docker Hub on its own. To publish one, run the `Docker Image CI` workflow manually with the `force_build` option ticked, or run the script by hand with `FORCE_BUILD=true ./scripts/get_updates.sh`.
+
+A version that is already published is never overwritten: rebuilding it publishes a new revision of that version (`42.20.4-release-2`, then `-3`, and so on) and moves `latest` and `latest-release` to it, so a pinned version tag always keeps pointing at the same image.
