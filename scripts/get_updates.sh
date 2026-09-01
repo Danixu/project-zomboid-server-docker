@@ -165,7 +165,16 @@ if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
 
   NEW_VERSION=$(versionCompare ${LATEST_UNSTABLE_VERSION} ${LATEST_IMAGE_UNSTABLE_VERSION})
 
-  if [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+  # Project Zomboid does not always have an open beta. When Build 42 became stable the
+  # "unstable" beta was removed from Steam, but the forum and the website keep reporting a
+  # version for it (the very same one as the stable build), so the script went on trying
+  # to build it and SteamCMD answered "ERROR! Failed to set beta 'unstable'" every time.
+  # A beta is only worth building while it is actually ahead of the stable build.
+  UNSTABLE_AHEAD=$(versionCompare ${LATEST_UNSTABLE_VERSION} ${LATEST_STABLE_VERSION})
+
+  if [ "${UNSTABLE_AHEAD}" != 1 ]; then
+    echo -e "\n\nThe detected unstable version (${LATEST_UNSTABLE_VERSION}) is not ahead of the stable one (${LATEST_STABLE_VERSION}), so there is no open beta right now. Skipping the unstable image.\n\n"
+  elif [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
     echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
 
     # An empty version would build the invalid tag "<image>:-unstable", but above all it
