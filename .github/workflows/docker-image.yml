@@ -4,6 +4,11 @@ on:
   schedule:
   - cron: "0 */6 * * *"
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Rebuild and publish the current version as a new revision, even when no new server version is detected. Use it after changing the Dockerfile or the scripts."
+        type: boolean
+        default: false
 
 jobs:
 
@@ -23,6 +28,8 @@ jobs:
     
       - name: Check the latest version and push new versions
         shell: bash
+        env:
+          FORCE_BUILD: ${{ inputs.force_build }}
         run: |
           # make file runnable, might not be necessary
           chmod +x "${GITHUB_WORKSPACE}/scripts/get_updates.sh"

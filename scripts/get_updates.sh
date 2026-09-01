@@ -11,6 +11,11 @@ DOCKER_IMAGE="danixu86/project-zomboid-dedicated-server"
 PZ_URL_WEB="https://projectzomboid.com/blog/"
 PZ_URL_FORUM="https://theindiestone.com/forums/forum/35-pz-updates/"
 BUILD_UNSTABLE_VERSIONS=true
+# Build even when the detected server version is not newer than the published image. The
+# image is only rebuilt when Project Zomboid itself gets a new version, so a change to the
+# Dockerfile or to the scripts never reaches Docker Hub on its own. The result is published
+# as a new revision of the current version, never on top of the existing tag.
+FORCE_BUILD="${FORCE_BUILD:-false}"
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "${SCRIPT_DIR}/../"
@@ -174,8 +179,12 @@ if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
 
   if [ "${UNSTABLE_AHEAD}" != 1 ]; then
     echo -e "\n\nThe detected unstable version (${LATEST_UNSTABLE_VERSION}) is not ahead of the stable one (${LATEST_STABLE_VERSION}), so there is no open beta right now. Skipping the unstable image.\n\n"
-  elif [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
-    echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
+  elif [ "${FORCE_BUILD}" == "true" ] || [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+    if [ "${FORCE_BUILD}" == "true" ]; then
+      echo -e "\n\nFORCE_BUILD is set, rebuilding the unstable image ($LATEST_UNSTABLE_VERSION) as a new revision...\n"
+    else
+      echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
+    fi
 
     # An empty version would build the invalid tag "<image>:-unstable", but above all it
     # means the version detection failed and the script should stop instead of publishing
@@ -186,8 +195,20 @@ if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
     fi
 
     # Stop at the first failure instead of pushing tags that were never built.
-    docker build --compress --no-cache --build-arg STEAMAPPBRANCH=unstable -t ${DOCKER_IMAGE}:latest-unstable -t ${DOCKER_IMAGE}:${LATEST_UNSTABLE_VERSION}-unstable . || exit 1
-    docker push ${DOCKER_IMAGE}:${LATEST_UNSTABLE_VERSION}-unstable || exit 1
+    # Same as the stable image: an already published version is republished as the next
+    # revision instead of overwriting the tag someone may have pinned.
+    UNSTABLE_TAG="${LATEST_UNSTABLE_VERSION}-unstable"
+    if echo "${LATEST_IMAGES}" | grep -q "\"${UNSTABLE_TAG}\""; then
+      REVISION=2
+      while echo "${LATEST_IMAGES}" | grep -q "\"${LATEST_UNSTABLE_VERSION}-unstable-${REVISION}\""; do
+        REVISION=$((REVISION + 1))
+      done
+      UNSTABLE_TAG="${LATEST_UNSTABLE_VERSION}-unstable-${REVISION}"
+      echo "Version ${LATEST_UNSTABLE_VERSION} is already published, publishing it as ${UNSTABLE_TAG} to leave the existing tag untouched"
+    fi
+
+    docker build --compress --no-cache --build-arg STEAMAPPBRANCH=unstable -t ${DOCKER_IMAGE}:latest-unstable -t ${DOCKER_IMAGE}:${UNSTABLE_TAG} . || exit 1
+    docker push ${DOCKER_IMAGE}:${UNSTABLE_TAG} || exit 1
     docker push ${DOCKER_IMAGE}:latest-unstable || exit 1
   elif [ $NEW_VERSION == 0 ]; then
     echo -e "\n\nThere is no new unstable version of the Zomboid server\n\n"
@@ -204,8 +225,12 @@ echo -e "\n\n*******************************************************************
 echo "Checking the latest stable version..."
 NEW_VERSION=$(versionCompare ${LATEST_STABLE_VERSION} ${LATEST_IMAGE_STABLE_VERSION})
 
-if [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
-  echo -e "\n\nA new version of the stable server was detected ($LATEST_STABLE_VERSION). Creating the new image...\n"
+if [ "${FORCE_BUILD}" == "true" ] || [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+  if [ "${FORCE_BUILD}" == "true" ]; then
+    echo -e "\n\nFORCE_BUILD is set, rebuilding the stable image ($LATEST_STABLE_VERSION) as a new revision...\n"
+  else
+    echo -e "\n\nA new version of the stable server was detected ($LATEST_STABLE_VERSION). Creating the new image...\n"
+  fi
 
   # An empty version would build the invalid tag "<image>:-release", but above all it
   # means the version detection failed and the script should stop instead of publishing
@@ -218,8 +243,22 @@ if [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
   # Stop at the first failure. Only the exit status of the last push used to be reported,
   # so a failed build or a failed intermediate push was masked by the "latest" push that
   # followed it and the job still looked green.
-  docker build --compress --no-cache -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:latest-release -t ${DOCKER_IMAGE}:${LATEST_STABLE_VERSION}-release . || exit 1
-  docker push ${DOCKER_IMAGE}:${LATEST_STABLE_VERSION}-release || exit 1
+  # Never overwrite a version tag that is already published: whoever pinned
+  # 42.20.4-release has to keep getting the very same image. When the version is already
+  # out and the image is built again (because the Dockerfile or the scripts changed), it
+  # goes out as the next revision of that version instead, and the moving tags follow it.
+  STABLE_TAG="${LATEST_STABLE_VERSION}-release"
+  if echo "${LATEST_IMAGES}" | grep -q "\"${STABLE_TAG}\""; then
+    REVISION=2
+    while echo "${LATEST_IMAGES}" | grep -q "\"${LATEST_STABLE_VERSION}-release-${REVISION}\""; do
+      REVISION=$((REVISION + 1))
+    done
+    STABLE_TAG="${LATEST_STABLE_VERSION}-release-${REVISION}"
+    echo "Version ${LATEST_STABLE_VERSION} is already published, publishing it as ${STABLE_TAG} to leave the existing tag untouched"
+  fi
+
+  docker build --compress --no-cache -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:latest-release -t ${DOCKER_IMAGE}:${STABLE_TAG} . || exit 1
+  docker push ${DOCKER_IMAGE}:${STABLE_TAG} || exit 1
   docker push ${DOCKER_IMAGE}:latest-release || exit 1
   docker push ${DOCKER_IMAGE}:latest || exit 1
 elif [ $NEW_VERSION == 0 ]; then
