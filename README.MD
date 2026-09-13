@@ -147,6 +147,10 @@ To setup the server you can use the docker-compose program:
 * Copy the .env.template to .env and edit it with the settings you want. The only mandatory variable is ADMINPASSWORD and just the first time the server is executed (once is started at least once, it can be removed). The other variables are optional.
 * Run the `docker-compose up -d` command to start the server.
 
+## Deploy on Sealos
+
+For a community-maintained deployment using this Docker image, see the [Sealos guide](docs/sealos.md) for setup, public game ports, and persistent storage.
+
 ## Scripts folder
 
 In the scripts folders there are three scripts:
