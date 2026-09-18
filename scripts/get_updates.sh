@@ -82,6 +82,45 @@ echo -e "\tUNSTABLE: ${LATEST_IMAGE_UNSTABLE_VERSION}"
 
 ##########################################
 ##                                      ##
+## Checking if the images are outdated  ##
+##                                      ##
+##########################################
+# The images are only rebuilt for a new server version, so a change to what goes into them
+# (the Dockerfile or the scripts it copies) was never published on its own and had to be
+# pushed out by hand with FORCE_BUILD. Compare the last change to those files with the date
+# of the published tag instead, and rebuild whenever the code is newer than the image.
+#
+# --first-parent dates a merged pull request by when it landed on the branch, not by when
+# its commits were written, which can be days earlier than the image it has to beat.
+# This needs the full history, hence `fetch-depth: 0` in the workflow: in a shallow clone
+# the only commit looks like it touched every file, and every run would rebuild.
+IMAGE_SOURCES="Dockerfile scripts/entry.sh scripts/search_folder.sh"
+LAST_SOURCE_CHANGE=$(git log -1 --first-parent --format=%ct -- ${IMAGE_SOURCES} 2>/dev/null)
+
+# Prints true when the given tag was published before the last change to the image sources.
+# Any missing piece of data answers false: a failed lookup must never turn into a rebuild on
+# every single run.
+image_is_outdated() {
+  local published published_ts
+  published=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/${DOCKER_IMAGE}/tags/$1" | jq -r '.last_updated // empty' 2>/dev/null)
+  published_ts=$(date -d "${published}" +%s 2>/dev/null)
+  if [ -z "${published}" ] || [ -z "${published_ts}" ] || [ -z "${LAST_SOURCE_CHANGE}" ]; then
+    echo false
+  elif [ "${LAST_SOURCE_CHANGE}" -gt "${published_ts}" ]; then
+    echo true
+  else
+    echo false
+  fi
+}
+
+STABLE_OUTDATED=$(image_is_outdated latest-release)
+UNSTABLE_OUTDATED=$(image_is_outdated latest-unstable)
+echo -e "\n\nLast change to the image sources: $(date -u -d "@${LAST_SOURCE_CHANGE:-0}" '+%Y-%m-%d %H:%M UTC')"
+echo -e "\tRELEASE image outdated: ${STABLE_OUTDATED}"
+echo -e "\tUNSTABLE image outdated: ${UNSTABLE_OUTDATED}"
+
+##########################################
+##                                      ##
 ## Checking the latest version in Forum ##
 ##                                      ##
 ##########################################
@@ -179,9 +218,11 @@ if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
 
   if [ "${UNSTABLE_AHEAD}" != 1 ]; then
     echo -e "\n\nThe detected unstable version (${LATEST_UNSTABLE_VERSION}) is not ahead of the stable one (${LATEST_STABLE_VERSION}), so there is no open beta right now. Skipping the unstable image.\n\n"
-  elif [ "${FORCE_BUILD}" == "true" ] || [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+  elif [ "${FORCE_BUILD}" == "true" ] || [ "${UNSTABLE_OUTDATED}" == "true" ] || [ "${LATEST_IMAGE_UNSTABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
     if [ "${FORCE_BUILD}" == "true" ]; then
       echo -e "\n\nFORCE_BUILD is set, rebuilding the unstable image ($LATEST_UNSTABLE_VERSION) as a new revision...\n"
+    elif [ "${UNSTABLE_OUTDATED}" == "true" ]; then
+      echo -e "\n\nThe published unstable image is older than the last change to the Dockerfile or the scripts, rebuilding it ($LATEST_UNSTABLE_VERSION).\n"
     else
       echo -e "\n\nA new version of the unstable server was detected ($LATEST_UNSTABLE_VERSION). Creating the new image...\n"
     fi
@@ -225,9 +266,11 @@ echo -e "\n\n*******************************************************************
 echo "Checking the latest stable version..."
 NEW_VERSION=$(versionCompare ${LATEST_STABLE_VERSION} ${LATEST_IMAGE_STABLE_VERSION})
 
-if [ "${FORCE_BUILD}" == "true" ] || [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
+if [ "${FORCE_BUILD}" == "true" ] || [ "${STABLE_OUTDATED}" == "true" ] || [ "${LATEST_IMAGE_STABLE_VERSION}" == "" ] || [ $NEW_VERSION == 1 ]; then
   if [ "${FORCE_BUILD}" == "true" ]; then
     echo -e "\n\nFORCE_BUILD is set, rebuilding the stable image ($LATEST_STABLE_VERSION) as a new revision...\n"
+  elif [ "${STABLE_OUTDATED}" == "true" ]; then
+    echo -e "\n\nThe published stable image is older than the last change to the Dockerfile or the scripts, rebuilding it ($LATEST_STABLE_VERSION).\n"
   else
     echo -e "\n\nA new version of the stable server was detected ($LATEST_STABLE_VERSION). Creating the new image...\n"
   fi
