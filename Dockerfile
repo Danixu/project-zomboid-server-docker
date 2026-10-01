@@ -34,22 +34,25 @@ RUN for extra_locale in ${EXTRA_LOCALES}; do \
   # Generate locale
   && locale-gen
 
-# Download the Project Zomboid dedicated server app using the steamcmd app
-# Set the entry point file permissions
+# Download the Project Zomboid dedicated server app using the steamcmd app.
+# SteamCMD sometimes fails on the first attempt with "Missing configuration"
+# (exit code 8) until the app info is cached, and succeeds when run again, so
+# the download is retried a few times before failing the build.
 RUN set -x \
   && mkdir -p "${STEAMAPPDIR}" \
   && chown -R "${USER}:${USER}" "${STEAMAPPDIR}" \
-  && if [ "${STEAMAPPBRANCH}" = "public" ]; then \
+  && if [ "${STEAMAPPBRANCH}" = "public" ]; then BETA_ARGS=""; \
+     else BETA_ARGS="-beta ${STEAMAPPBRANCH}"; fi \
+  && for attempt in 1 2 3; do \
        bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
-       +login anonymous \
-       +app_update "${STEAMAPPID}" validate \
-       +quit; \
-     else \
-       bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
-       +login anonymous \
-       +app_update "${STEAMAPPID}" -beta "${STEAMAPPBRANCH}" validate \
-       +quit; \
-     fi
+         +login anonymous \
+         +app_update "${STEAMAPPID}" ${BETA_ARGS} validate \
+         +quit \
+       && break; \
+       if [ "${attempt}" = "3" ]; then exit 1; fi; \
+       echo "steamcmd failed (attempt ${attempt}), retrying in 10s..."; \
+       sleep 10; \
+     done
 
 # Copy the entry point file
 COPY --chown=${USER}:${USER} scripts/entry.sh /server/scripts/entry.sh
