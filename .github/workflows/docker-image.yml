@@ -6,9 +6,15 @@ on:
   workflow_dispatch:
     inputs:
       force_build:
-        description: "Rebuild and publish the current version as a new revision, even when no new server version is detected. Use it after changing the Dockerfile or the scripts."
+        description: "Rebuild and publish the current version right away. Changes to the Dockerfile or the scripts are published by the next scheduled run on their own, this only skips the wait."
         type: boolean
         default: false
+
+# Never run two of these at once: both would see the same tags on Docker Hub, pick the same
+# revision number and push over each other.
+concurrency:
+  group: docker-image-ci
+  cancel-in-progress: false
 
 jobs:
 
@@ -19,6 +25,10 @@ jobs:
     steps:
       - name: Checkout the latest version
         uses: actions/checkout@v7
+        with:
+          # The script dates the last change to the Dockerfile and the scripts from the git
+          # history, which a shallow clone does not have.
+          fetch-depth: 0
 
       - name: Login to Docker Hub
         uses: docker/login-action@v4
