@@ -20,6 +20,7 @@ ENV STEAMAPPBRANCH=$STEAMAPPBRANCH
 RUN apt-get update \
   && apt-get install -y --no-install-recommends --no-install-suggests \
   dos2unix \
+  netcat-traditional \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
