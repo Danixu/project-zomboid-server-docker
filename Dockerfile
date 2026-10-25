@@ -20,6 +20,7 @@ ENV STEAMAPPBRANCH=$STEAMAPPBRANCH
 RUN apt-get update \
   && apt-get install -y --no-install-recommends --no-install-suggests \
   dos2unix \
+  netcat-traditional \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -69,5 +70,6 @@ WORKDIR ${HOMEDIR}
 # Expose ports
 EXPOSE 16261-16262/udp \
   27015/tcp
-
+HEALTHCHECK --interval=2m --timeout=3s --start-period=10s --retries=5\
+  CMD nc -z -u -w 2 127.0.0.1 16261 || exit 1
 ENTRYPOINT ["/server/scripts/entry.sh"]
