@@ -8,8 +8,8 @@
 ########################333333##################
 
 DOCKER_IMAGE="danixu86/project-zomboid-dedicated-server"
-PZ_URL_WEB="https://projectzomboid.com/blog/"
-PZ_URL_FORUM="https://theindiestone.com/forums/forum/35-pz-updates/"
+# The game's Steam app id: its news feed is where the version announcements are read from.
+STEAM_GAME_APPID=108600
 BUILD_UNSTABLE_VERSIONS=true
 # Build even when the detected server version is not newer than the published image. The
 # image is only rebuilt when Project Zomboid itself gets a new version, so a change to the
@@ -119,63 +119,59 @@ echo -e "\n\nLast change to the image sources: $(date -u -d "@${LAST_SOURCE_CHAN
 echo -e "\tRELEASE image outdated: ${STABLE_OUTDATED}"
 echo -e "\tUNSTABLE image outdated: ${UNSTABLE_OUTDATED}"
 
-##########################################
-##                                      ##
-## Checking the latest version in Forum ##
-##                                      ##
-##########################################
-# Texts to search on the forum
+##############################################
+##                                          ##
+## Checking the latest version on Steam     ##
+##                                          ##
+##############################################
+# This used to scrape the blog and the forum. Both stopped yielding a version: they
+# answer 403 to the runner now, and the markup they were parsed with had changed before
+# that. Steam's news feed carries the same announcements through a documented API that
+# needs no key and no scraping, so it is read instead.
+#
+# The titles carry the version in the shape the matching below already expected
+# ("42.22.2 STABLE Released", "Build 42.21 Unstable Released"), so a version is still a
+# number immediately followed by a keyword, and the highest match wins. Items from the
+# other feeds Steam mixes in (press coverage, translations) carry no version and drop out
+# on their own.
+STEAM_NEWS_URL="https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${STEAM_GAME_APPID}&count=30&maxlength=1"
+
+# Keywords that mark a title as announcing a stable or a beta build. PRE-RELEASE is what
+# the beta track has been called since Build 42; BETA, UNSTABLE and IWBUMS are its earlier
+# names and stay so older announcements keep matching.
 STABLE_TITLES="STABLE"
-UNSTABLE_TITLES="BETA|HOTFIX|UNSTABLE"
-# Forum data
-FORUM_DATA=`curl -s "${PZ_URL_FORUM}"`
-# Get the latest stable versions to filter it later
-LATEST_FORUM_STABLE_VERSIONS=$(echo "${FORUM_DATA}" | \
+UNSTABLE_TITLES="BETA|HOTFIX|UNSTABLE|IWBUMS|PRE-RELEASE"
+
+NEWS_TITLES=$(curl -L -s "${STEAM_NEWS_URL}" | jq -r '.appnews.newsitems[]?.title')
+
+LATEST_STEAM_STABLE_VERSIONS=$(echo "${NEWS_TITLES}" | \
 grep -oPi "[0-9]{2,3}\.[0-9]{1,2}(\.[0-9]{1,2})? ($STABLE_TITLES)" | \
 grep -oE "[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+" | sort | uniq)
-# Get the latest unstable versions to filter it later
-LATEST_FORUM_UNSTABLE_VERSIONS=$(echo "${FORUM_DATA}" | \
+LATEST_STEAM_UNSTABLE_VERSIONS=$(echo "${NEWS_TITLES}" | \
 grep -oPi "[0-9]{2,3}\.[0-9]{1,2}(\.[0-9]{1,2})? ($UNSTABLE_TITLES)" | \
 grep -oE "[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+" | sort | uniq)
 
-# Sometimes a pinned post hiddens the latest version, so all versions will be checked
-LATEST_FORUM_STABLE_VERSION=0.0.0
-for version in $LATEST_FORUM_STABLE_VERSIONS; do
-  COMPARE_VERSION=$(versionCompare ${LATEST_FORUM_STABLE_VERSION} ${version})
+# The feed is not ordered by version and one title can announce several builds at once
+# ("42.20.4 STABLE & 42.19.2 UNSTABLE & 41.78.21 LEGACY Hotfixes"), so every match is
+# compared and the highest kept.
+LATEST_STABLE_VERSION=0.0.0
+for version in $LATEST_STEAM_STABLE_VERSIONS; do
+  COMPARE_VERSION=$(versionCompare ${LATEST_STABLE_VERSION} ${version})
   if [ $COMPARE_VERSION == -1 ]; then
-    LATEST_FORUM_STABLE_VERSION=$version
+    LATEST_STABLE_VERSION=$version
   fi
 done
-LATEST_FORUM_UNSTABLE_VERSION=0.0.0
-for version in $LATEST_FORUM_UNSTABLE_VERSIONS; do
-  COMPARE_VERSION=$(versionCompare ${LATEST_FORUM_UNSTABLE_VERSION} ${version})
+LATEST_UNSTABLE_VERSION=0.0.0
+for version in $LATEST_STEAM_UNSTABLE_VERSIONS; do
+  COMPARE_VERSION=$(versionCompare ${LATEST_UNSTABLE_VERSION} ${version})
   if [ $COMPARE_VERSION == -1 ]; then
-    LATEST_FORUM_UNSTABLE_VERSION=$version
+    LATEST_UNSTABLE_VERSION=$version
   fi
 done
 
-echo -e "\n\nLatest forum versions:"
-echo -e "\tRELEASE: ${LATEST_FORUM_STABLE_VERSION}"
-echo -e "\tUNSTABLE: ${LATEST_FORUM_UNSTABLE_VERSION}"
-
-################################################
-##                                            ##
-## Checking the latest version in the webpage ##
-##                                            ##
-################################################
-# Texts to search on the webpage
-STABLE_TEXT="Stable Build"
-UNSTABLE_TEXT="IWBUMS Beta"
-
-# Extract the versions from the website (sometimes it is outdated, that is why I check first the forum)
-WEBPAGE_DATA=`curl "${PZ_URL_WEB}" 2>/dev/null`
-LATEST_WEBPAGE_STABLE_VERSION=`echo "${WEBPAGE_DATA}" | grep -i "${STABLE_TEXT}" | head -n1 | cut -d ":" -f2 | awk '{print $1}'`
-LATEST_WEBPAGE_UNSTABLE_VERSION=`echo "${WEBPAGE_DATA}" | grep -i "${UNSTABLE_TEXT}" | head -n1 | cut -d ":" -f2 | awk '{print $1}'`
-
-echo -e "\n\nLatest website versions:"
-echo -e "\tRELEASE: ${LATEST_WEBPAGE_STABLE_VERSION}"
-echo -e "\tUNSTABLE: ${LATEST_WEBPAGE_UNSTABLE_VERSION}"
-
+echo -e "\n\nDetected latest versions (Steam news):"
+echo -e "\tRELEASE: ${LATEST_STABLE_VERSION}"
+echo -e "\tUNSTABLE: ${LATEST_UNSTABLE_VERSION}"
 
 ##################################
 ##                              ##
@@ -183,25 +179,18 @@ echo -e "\tUNSTABLE: ${LATEST_WEBPAGE_UNSTABLE_VERSION}"
 ##                              ##
 ##################################
 
-LATEST_STABLE_VERSION=""
-LATEST_STABLE_VERSION_COMPARE=$(versionCompare ${LATEST_FORUM_STABLE_VERSION} ${LATEST_WEBPAGE_STABLE_VERSION})
-if [ $LATEST_STABLE_VERSION_COMPARE == -1 ]; then
-  LATEST_STABLE_VERSION=$LATEST_WEBPAGE_STABLE_VERSION
-else
-  LATEST_STABLE_VERSION=$LATEST_FORUM_STABLE_VERSION
+# The stable version comes from a single source now, and that source has broken before
+# without anything noticing: the detection falls back to the 0.0.0 it was initialised
+# with, every version comparison below then reads "the server is older than what we
+# published", and the run ends green having built nothing.
+#
+# There is no legitimate reason for this value to be absent here, so stop at the point
+# where it is produced rather than letting it travel.
+if [ -z "${LATEST_STABLE_VERSION}" ] || [ "${LATEST_STABLE_VERSION}" == "0.0.0" ]; then
+  echo -e "\n\n*** ERROR: no stable version could be read from the Steam news feed (app ${STEAM_GAME_APPID}) ***"
+  echo -e "*** Either the feed is unreachable or the announcement titles no longer carry a version number. Nothing can be published until it is fixed. ***\n\n"
+  exit 1
 fi
-
-LATEST_UNSTABLE_VERSION=""
-LATEST_UNSTABLE_VERSION_COMPARE=$(versionCompare ${LATEST_FORUM_UNSTABLE_VERSION} ${LATEST_WEBPAGE_UNSTABLE_VERSION})
-if [ $LATEST_UNSTABLE_VERSION_COMPARE == -1 ]; then
-  LATEST_UNSTABLE_VERSION=$LATEST_WEBPAGE_UNSTABLE_VERSION
-else
-  LATEST_UNSTABLE_VERSION=$LATEST_FORUM_UNSTABLE_VERSION
-fi
-
-echo -e "\n\nDetected real latest versions (forum and website):"
-echo -e "\tRELEASE: ${LATEST_STABLE_VERSION}"
-echo -e "\tUNSTABLE: ${LATEST_UNSTABLE_VERSION}"
 
 if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
   echo -e "\n\n****************************************************************************"
@@ -307,9 +296,12 @@ if [ "${FORCE_BUILD}" == "true" ] || [ "${STABLE_OUTDATED}" == "true" ] || [ "${
 elif [ $NEW_VERSION == 0 ]; then
   echo -e "\n\nThere is no new stable version of the Zomboid server\n\n"
 elif [ $NEW_VERSION == -1 ]; then
-  echo -e "\n\nServer stable version (${LATEST_STABLE_VERSION}) is lower than latest docker version (${LATEST_IMAGE_STABLE_VERSION})... Please, check this script because maybe is not working correctly\n\n"
+  echo -e "\n\n*** ERROR: the detected stable version (${LATEST_STABLE_VERSION}) is older than the published image (${LATEST_IMAGE_STABLE_VERSION}) ***"
+  echo -e "*** Versions do not move backwards, so the detection is reading the wrong thing. Fix it before trusting any tag this script writes. ***\n\n"
+  exit 1
 else
-  echo -e "\n\nThere was an unknown error checking the stable version.\n\n"
+  echo -e "\n\n*** ERROR: the stable version check ended in a state this script does not handle (comparison returned '${NEW_VERSION}') ***\n\n"
+  exit 1
 fi
 echo "****************************************************************************"
 echo -e "\n\n"
