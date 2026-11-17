@@ -203,6 +203,25 @@ echo -e "\n\nDetected real latest versions (forum and website):"
 echo -e "\tRELEASE: ${LATEST_STABLE_VERSION}"
 echo -e "\tUNSTABLE: ${LATEST_UNSTABLE_VERSION}"
 
+# The stable version is read by scraping two web pages, and both have broken before
+# without anything noticing: the detection falls back to the 0.0.0 it was initialised
+# with, every version comparison below then reads "the server is older than what we
+# published", and the run ends green having built nothing. The job stayed that way for
+# weeks while a new server build went unpublished.
+#
+# There is no legitimate reason for this value to be absent here, so stop at the point
+# where it is produced rather than letting it travel. The equivalent check for the build
+# step could not catch this: it sits inside the branch that builds, and a 0.0.0 never
+# reaches that branch.
+#
+# The unstable track is deliberately not checked the same way: with no beta open there is
+# genuinely nothing to find, and that case is already handled further down.
+if [ -z "${LATEST_STABLE_VERSION}" ] || [ "${LATEST_STABLE_VERSION}" == "0.0.0" ]; then
+  echo -e "\n\n*** ERROR: no stable version could be read from the forum (${PZ_URL_FORUM}) or the website (${PZ_URL_WEB}) ***"
+  echo -e "*** Both are scraped for a version number, so a layout change or a block on either side breaks this. Nothing can be published until it is fixed. ***\n\n"
+  exit 1
+fi
+
 if [ ${BUILD_UNSTABLE_VERSIONS} == true ]; then
   echo -e "\n\n****************************************************************************"
   echo "The unstable image build is enabled. Checking latest version..."
@@ -307,9 +326,12 @@ if [ "${FORCE_BUILD}" == "true" ] || [ "${STABLE_OUTDATED}" == "true" ] || [ "${
 elif [ $NEW_VERSION == 0 ]; then
   echo -e "\n\nThere is no new stable version of the Zomboid server\n\n"
 elif [ $NEW_VERSION == -1 ]; then
-  echo -e "\n\nServer stable version (${LATEST_STABLE_VERSION}) is lower than latest docker version (${LATEST_IMAGE_STABLE_VERSION})... Please, check this script because maybe is not working correctly\n\n"
+  echo -e "\n\n*** ERROR: the detected stable version (${LATEST_STABLE_VERSION}) is older than the published image (${LATEST_IMAGE_STABLE_VERSION}) ***"
+  echo -e "*** Versions do not move backwards, so the detection is reading the wrong thing. Fix it before trusting any tag this script writes. ***\n\n"
+  exit 1
 else
-  echo -e "\n\nThere was an unknown error checking the stable version.\n\n"
+  echo -e "\n\n*** ERROR: the stable version check ended in a state this script does not handle (comparison returned '${NEW_VERSION}') ***\n\n"
+  exit 1
 fi
 echo "****************************************************************************"
 echo -e "\n\n"
